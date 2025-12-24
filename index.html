@@ -54,7 +54,13 @@
     </div>
 
     <script>
-        const apiKey = ""; // Bu alan otomatik dolar
+        const apiKey = ""; curl -X POST "https://generativelanguage.googleapis.com/v1beta/interactions" \
+-H "Content-Type: application/json" \
+-H "x-goog-api-key: $GEMINI_API_KEY" \
+-d '{
+    "model": "gemini-3-flash-preview",
+    "input": "Tell me a short joke about programming."
+}'
         let cat = "Genel";
 
         function startChat(selected) {
