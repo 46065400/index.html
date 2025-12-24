@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Halit Evin Aİ</title>
+    <!-- Harici dosya bağımlılığı olmadan Tailwind ve İkonlar -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: sans-serif; background-color: #f1f5f9; }
+        .chat-container { height: calc(100vh - 160px); overflow-y: auto; }
+        .ai-bubble { background: white; border-radius: 15px 15px 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .user-bubble { background: #2563eb; color: white; border-radius: 15px 15px 0 15px; }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="font-bold italic text-xl">Halit Evin Aİ</h1>
+        <button onclick="location.reload()" class="text-white"><i class="fas fa-sync-alt"></i></button>
+    </nav>
+
+    <!-- Ana Ekran -->
+    <div id="home" class="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-6">
+        <div class="bg-blue-100 p-6 rounded-full text-blue-600">
+            <i class="fas fa-robot text-5xl"></i>
+        </div>
+        <div>
+            <h2 class="text-2xl font-bold italic">Hoş Geldiniz</h2>
+            <p class="text-gray-600">Size nasıl yardımcı olabilirim?</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4 w-full max-w-sm">
+            <button onclick="startChat('Ev İşleri')" class="bg-white p-4 rounded-xl shadow border hover:bg-blue-50">Ev İşleri</button>
+            <button onclick="startChat('Çocuklar')" class="bg-white p-4 rounded-xl shadow border hover:bg-blue-50">Çocuklar</button>
+            <button onclick="startChat('Mutfak')" class="bg-white p-4 rounded-xl shadow border hover:bg-blue-50">Mutfak</button>
+            <button onclick="startChat('Genel')" class="bg-white p-4 rounded-xl shadow border hover:bg-blue-50">Soru Sor</button>
+        </div>
+    </div>
+
+    <!-- Sohbet Ekranı -->
+    <div id="chat" class="hidden flex-1 flex flex-col bg-gray-50">
+        <div class="bg-white p-3 border-b flex items-center">
+            <button onclick="showHome()" class="mr-3 text-gray-500"><i class="fas fa-arrow-left"></i></button>
+            <span id="chat-title" class="font-bold">Sohbet</span>
+        </div>
+        <div id="messages" class="chat-container p-4 space-y-4 flex flex-col"></div>
+        <div id="loader" class="hidden px-4 py-2 text-xs italic text-gray-400">Halit Evin yazıyor...</div>
+        <div class="p-4 bg-white border-t flex gap-2">
+            <input type="text" id="prompt" placeholder="Mesajınızı yazın..." class="flex-1 border p-2 rounded-lg outline-none">
+            <button onclick="send()" class="bg-blue-600 text-white px-4 py-2 rounded-lg"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = ""; // Bu alan otomatik dolar
+        let cat = "Genel";
+
+        function startChat(selected) {
+            cat = selected;
+            document.getElementById('home').classList.add('hidden');
+            document.getElementById('chat').classList.remove('hidden');
+            document.getElementById('chat-title').innerText = "Halit Evin - " + cat;
+            if(document.getElementById('messages').children.length === 0) {
+                addMsg('ai', `Merhaba! Ben Halit Evin Aİ. ${cat} konusunda size nasıl yardımcı olabilirim?`);
+            }
+        }
+
+        function showHome() {
+            document.getElementById('chat').classList.add('hidden');
+            document.getElementById('home').classList.remove('hidden');
+        }
+
+        function addMsg(role, text) {
+            const container = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = `p-3 max-w-[80%] ${role === 'ai' ? 'ai-bubble self-start' : 'user-bubble self-end'}`;
+            div.innerText = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function send() {
+            const input = document.getElementById('prompt');
+            const val = input.value.trim();
+            if(!val) return;
+
+            addMsg('user', val);
+            input.value = '';
+            document.getElementById('loader').classList.remove('hidden');
+
+            const sys = `Sen Halit Evin Aİ'sin. Kibar, aile dostu, Türkçe konuşan bir yardımcısın. Konu: ${cat}.`;
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: val }] }],
+                        systemInstruction: { parts: [{ text: sys }] }
+                    })
+                });
+                const data = await res.json();
+                addMsg('ai', data.candidates[0].content.parts[0].text);
+            } catch (e) {
+                addMsg('ai', "Bir hata oluştu.");
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
+
