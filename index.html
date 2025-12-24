@@ -98,7 +98,7 @@ DOCTYPE html>
             input.value = '';
             document.getElementById('loader').classList.remove('hidden');
 
-            const sys = `Sen Halit Evin Aİ'sin. Kibar, aile dostu, Türkçe konuşan bir yardımcısın.https://www.google.com/?hl=tr kullanırsın. Konu: ${cat}.`;
+            const sys = `Sen Halit Evin Aİ'sin. Kibar, aile dostu, Türkçe konuşan bir yardımcısın. Konu: ${cat}.`;
 
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
