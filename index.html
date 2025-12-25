@@ -3,176 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Halit Evin AI | Kararlı Sürüm</title>
+    <title>Halit Evin AI | Kesintisiz Erişim</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 0; }
-        .chat-container { height: calc(100vh - 160px); overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .bubble { max-width: 85%; padding: 15px; border-radius: 18px; font-size: 15px; line-height: 1.6; position: relative; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: ui-sans-serif, system-ui; background-color: #0f172a; color: #f8fafc; }
+        .chat-area { height: calc(100vh - 160px); overflow-y: auto; padding: 20px; }
+        .bubble { max-width: 85%; padding: 14px; border-radius: 20px; font-size: 15px; margin-bottom: 12px; }
         .ai { background: #1e293b; color: #e2e8f0; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #334155; }
-        .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-        .offline { background: #ef4444; }
-        #debug-box { background: #000; color: #0f0; font-family: monospace; font-size: 10px; padding: 5px; display: none; }
+        .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .error-msg { background: #450a0a; color: #fca5a5; padding: 12px; border-radius: 12px; font-size: 12px; border: 1px solid #7f1d1d; margin: 10px; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
 
-    <!-- Debug Paneli (Sadece hata anında açılır) -->
-    <div id="debug-box">Sistem Logları: Hazır...</div>
-
-    <!-- Üst Başlık -->
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">H</div>
-            <div>
-                <h1 class="font-bold text-lg text-white">Halit Evin AI</h1>
-                <div class="flex items-center">
-                    <span id="led" class="status-dot offline"></span>
-                    <span id="status-text" class="text-[10px] uppercase font-bold text-slate-400">API Bekleniyor</span>
-                </div>
-            </div>
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">H</div>
+            <h1 class="font-bold text-lg">Halit Evin AI <span class="text-[10px] text-blue-400">v1.5 STABLE</span></h1>
         </div>
-        <button onclick="location.reload()" class="p-2 text-slate-400 hover:text-white transition"><i class="fas fa-sync"></i></button>
+        <button onclick="location.reload()" class="text-slate-400"><i class="fas fa-sync"></i></button>
     </header>
 
-    <!-- Mesaj Alanı -->
-    <main id="chat-box" class="chat-container flex-1">
-        <div class="bubble ai">
-            Merhaba, ben halit evin ai . Emrinze amâdeyim 
+    <div id="quota-error" class="hidden error-msg text-center">
+        ⚠️ Kota Doldu! Lütfen 30 saniye bekleyip tekrar deneyin.
+    </div>
+
+    <main id="chatbox" class="chat-area flex flex-col flex-1">
+        <div class="bubble ai shadow-sm">
+            Merhaba, ben Halit Evin ai . Emrinize amâdeyim
         </div>
     </main>
 
-    <!-- Yükleme İkonu -->
     <div id="loader" class="hidden px-6 py-2 text-blue-400 text-xs font-bold animate-pulse">
-        <i class="fas fa-globe-americas fa-spin mr-2"></i> GOOGLE SEARCH AKTİF: TARANIYOR...
+        <i class="fas fa-search"></i> Google taranıyor...
     </div>
 
-    <!-- Giriş Alanı -->
     <footer class="p-4 bg-slate-900 border-t border-slate-800">
-        <div class="max-w-4xl mx-auto flex gap-3">
-            <input type="text" id="userInput" placeholder="Mesajınızı yazın..." 
-                   class="flex-1 bg-slate-800 border border-slate-700 text-white p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-            <button id="sendBtn" class="bg-blue-600 text-white w-14 h-14 rounded-xl flex items-center justify-center shadow-lg hover:bg-blue-500 active:scale-95 transition-all">
+        <div class="flex gap-2 max-w-4xl mx-auto">
+            <input type="text" id="userInput" placeholder="Buraya yazın..." class="flex-1 bg-slate-800 border border-slate-700 p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+            <button id="sendBtn" class="bg-blue-600 text-white w-14 h-14 rounded-xl flex items-center justify-center shadow-lg active:scale-90 transition">
                 <i class="fas fa-paper-plane text-xl"></i>
             </button>
         </div>
     </footer>
 
     <script>
-        // --- KRİTİK: BURAYA API ANAHTARINI KOYUN ---
         const apiKey = "AIzaSyDw6d4UB2Fa0lAIV1UWPYCV3YO0eR74Kr4"; 
-        // ------------------------------------------
 
-        const chatBox = document.getElementById('chat-box');
+        const chatbox = document.getElementById('chatbox');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
         const loader = document.getElementById('loader');
-        const debugBox = document.getElementById('debug-box');
-        const led = document.getElementById('led');
-        const statusText = document.getElementById('status-text');
+        const quotaError = document.getElementById('quota-error');
 
-        // Başlangıç Kontrolü
-        if (apiKey.startsWith("AIza")) {
-            led.className = "status-dot online";
-            statusText.innerText = "Sistem Hazır";
-        } else {
-            console.error("API Anahtarı eksik veya hatalı!");
-            debugBox.style.display = "block";
-            debugBox.innerText = "HATA: API Anahtarı algılanamadı. Kodun içindeki apiKey değişkenini doldurun.";
-        }
+        async function send() {
+            const val = userInput.value.trim();
+            if(!val || !apiKey) return;
 
-        async function handleSend() {
-            const message = userInput.value.trim();
-            if (!message) return;
-
-            // Log ekle
-            console.log("Mesaj gönderiliyor:", message);
-            
-            // Kullanıcı baloncuğu
-            appendMessage('user', message);
+            addBubble('user', val);
             userInput.value = '';
             loader.classList.remove('hidden');
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            if (!apiKey) {
-                appendMessage('ai', "Hata: API Anahtarınız eksik. Lütfen kodun içindeki 'apiKey' alanına Google AI Studio anahtarınızı yazın.");
-                loader.classList.add('hidden');
-                return;
-            }
+            quotaError.classList.add('hidden');
 
             try {
-                // Gemini 2.0 Flash deniyoruz (Experimental)
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
-                
-                const response = await fetch(url, {
+                // Gemini 2.0 yerine daha stabil olan 1.5 Flash'a geçtik
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: message }] }],
-                        tools: [{ "google_search": {} }],
-                        systemInstruction: { parts: [{ text: "Sen Halit Evin AI'sın. Her zaman Google Search kullan." }] }
+                        contents: [{ parts: [{ text: val }] }],
+                        tools: [{ "google_search": {} }]
                     })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error.message || "Bilinmeyen API Hatası");
+                const data = await response.json();
+                
+                if (data.error) {
+                    if(data.error.message.includes("quota")) {
+                        quotaError.classList.remove('hidden');
+                        throw new Error("Kota doldu, biraz bekleyin.");
+                    }
+                    throw new Error(data.error.message);
                 }
 
-                const data = await response.json();
-                const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Yanıt alınamadı.";
-                
-                appendMessage('ai', aiResponse);
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Yanıt gelmedi.";
+                addBubble('ai', text);
 
-            } catch (err) {
-                console.error("İstek Hatası:", err);
-                appendMessage('ai', "Hata oluştu: " + err.message);
-                debugBox.style.display = "block";
-                debugBox.innerText = "Sistem Hatası: " + err.message;
+            } catch (e) {
+                addBubble('ai', "Hata: " + e.message);
             } finally {
                 loader.classList.add('hidden');
-                chatBox.scrollTop = chatBox.scrollHeight;
+                chatbox.scrollTop = chatbox.scrollHeight;
             }
         }
 
-        function appendMessage(role, text) {
+        function addBubble(role, text) {
             const div = document.createElement('div');
             div.className = `bubble ${role}`;
             div.innerText = text;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            chatbox.appendChild(div);
+            chatbox.scrollTop = chatbox.scrollHeight;
         }
 
-        // Event Listeners
-        sendBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleSend();
-        });
-
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSend();
-            }
-        });
+        sendBtn.addEventListener('click', send);
+        userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') send(); });
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
 
 
