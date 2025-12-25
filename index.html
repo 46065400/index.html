@@ -2,157 +2,206 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halit Evin Aİ - Canlı Bilgi Sistemi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Halit Evin Aİ | Akıllı Asistan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; margin: 0; }
-        .chat-scroll { height: calc(100vh - 180px); overflow-y: auto; scroll-behavior: smooth; }
-        .ai-bubble { background: white; border-radius: 18px 18px 18px 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .user-bubble { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border-radius: 18px 18px 2px 18px; }
-        .source-tag { font-size: 10px; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; margin-right: 4px; text-decoration: none; }
-        .source-tag:hover { background: #cbd5e1; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(226, 232, 240, 1);
+        }
+        .chat-container {
+            height: calc(100vh - 145px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        .message-anim {
+            animation: messageSlide 0.3s ease-out forwards;
+        }
+        @keyframes messageSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ai-bubble {
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border-radius: 18px 18px 18px 4px;
+        }
+        .user-bubble {
+            background: #2563eb;
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        .loading-dots div {
+            width: 6px;
+            height: 6px;
+            background: #2563eb;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        .loading-dots div:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots div:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        /* Gizli scrollbar */
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
 
-    <!-- Header -->
-    <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center shadow-sm">
+    <!-- Üst Başlık -->
+    <header class="glass-header sticky top-0 z-10 px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
-                <i class="fas fa-globe"></i>
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <i class="fas fa-robot text-xl"></i>
             </div>
             <div>
-                <h1 class="font-bold text-slate-800 text-lg leading-none">Halit Evin Aİ</h1>
-                <span class="text-[10px] text-green-600 font-bold uppercase tracking-tighter">Google Search Canlı Bağlantı</span>
+                <h1 class="font-bold text-slate-900 text-lg leading-tight">Halit Evin <span class="text-blue-600">Aİ</span></h1>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span class="text-[10px] font-bold text-slate-500 tracking-wide uppercase">Google Canlı Bağlantı</span>
+                </div>
             </div>
         </div>
-        <button onclick="location.reload()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500">
-            <i class="fas fa-sync-alt"></i>
+        <button onclick="window.location.reload()" class="p-2 text-slate-400 hover:text-blue-600 transition">
+            <i class="fas fa-rotate-right"></i>
         </button>
     </header>
 
     <!-- Mesajlaşma Alanı -->
-    <main id="chat-box" class="flex-1 chat-scroll p-4 space-y-4">
-        <div class="ai-bubble p-4 max-w-[90%] self-start border border-slate-100">
-            Merhaba! Ben Halit Evin Aİ. Google Search entegrasyonum aktif. Bana güncel haberleri, hava durumunu veya merak ettiğin herhangi bir konuyu sorabilirsin. Gerçek zamanlı verileri senin için tarayabilirim.
+    <main id="chat-box" class="flex-1 chat-container p-4 md:p-6 space-y-6 flex flex-col">
+        <!-- Başlangıç Mesajı -->
+        <div class="ai-bubble p-4 max-w-[85%] self-start message-anim">
+            <p class="text-slate-700 leading-relaxed">Selam! Ben <b>Halit Evin Aİ</b>. Google arama motoruna bağlıyım, her konuda sana en güncel bilgileri getirebilirim. Ne hakkında konuşalım?</p>
         </div>
     </main>
 
     <!-- Yazıyor Göstergesi -->
-    <div id="loading" class="hidden px-6 py-2">
-        <div class="flex items-center gap-2 text-blue-600 text-sm font-semibold">
-            <i class="fas fa-search animate-spin"></i> Google üzerinden bilgiler taranıyor...
+    <div id="loader" class="hidden px-8 py-2">
+        <div class="flex items-center gap-3">
+            <div class="loading-dots flex gap-1">
+                <div></div><div></div><div></div>
+            </div>
+            <span class="text-xs font-semibold text-blue-600 uppercase tracking-widest">Google taranıyor...</span>
         </div>
     </div>
 
-    <!-- Giriş Alanı -->
-    <footer class="p-4 bg-white border-t border-slate-200">
-        <div class="max-w-4xl mx-auto flex gap-2">
-            <input type="text" id="user-input" placeholder="Hava durumu nasıl? Bugünün haberleri neler?.." class="flex-1 bg-slate-100 border-none rounded-2xl p-4 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-            <button onclick="sendMessage()" class="bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center hover:bg-blue-700 shadow-lg transition-transform active:scale-95">
-                <i class="fas fa-arrow-up text-lg"></i>
+    <!-- Giriş Çubuğu -->
+    <footer class="p-4 bg-white border-t border-slate-100 shadow-2xl">
+        <div class="max-w-4xl mx-auto flex gap-3 items-center">
+            <div class="relative flex-1">
+                <input type="text" id="user-input" 
+                       placeholder="Buraya yazın..." 
+                       class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-5 pr-12 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-800"
+                       autocomplete="off">
+            </div>
+            <button id="send-btn" 
+                    class="bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-90 transition-all">
+                <i class="fas fa-paper-plane text-xl"></i>
             </button>
         </div>
     </footer>
 
     <script>
         // API ANAHTARINIZI BURAYA YAPIŞTIRIN
-        const apiKey =curl https://api.openai.com/v1/responses \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer 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" \
-  -d '{
-    "model": "gpt-5-nano",
-    "input": "write a haiku about ai",
-    "store": true
-  }'
+        const apiKey = "BURAYA_API_ANAHTARINI_KOYUN";
 
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const loader = document.getElementById('loader');
 
-        async function sendMessage() {
-            const input = document.getElementById('user-input');
-            const message = input.value.trim();
+        // Mesaj Gönderme Fonksiyonu
+        async function handleSend() {
+            const message = userInput.value.trim();
             if (!message) return;
 
-            if (apiKey === "curl https://api.openai.com/v1/responses \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer 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" \
-  -d '{
-    "model": "gpt-5-nano",
-    "input": "write a haiku about ai",
-    "store": true
-  }'
- {
-                appendMessage('ai', "Hata: Lütfen geçerli bir API Anahtarı ekleyin.");
+            // Kullanıcı mesajını ekle
+            appendMessage('user', message);
+            userInput.value = '';
+            
+            // Loader göster
+            loader.classList.remove('hidden');
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            if (apiKey === "BURAYA_API_ANAHTARINI_KOYUN") {
+                setTimeout(() => {
+                    appendMessage('ai', "Hata: API Anahtarı bulunamadı. Lütfen kodun içindeki 'BURAYA_API_ANAHTARINI_KOYUN' kısmına kendi anahtarını ekle.");
+                    loader.classList.add('hidden');
+                }, 1000);
                 return;
             }
 
-            appendMessage('user', message);
-            input.value = '';
-            document.getElementById('loading').classList.remove('hidden');
-
             try {
-                // Google Search Grounding ile API Çağrısı
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: message }] }],
-                        tools: [{ "google_search": {} }], // GOOGLE ARAMA ENTEGRASYONU
+                        tools: [{ "google_search": {} }],
                         systemInstruction: { 
-                            parts: [{ text: "Sen Halit Evin Aİ'sin. Güncel bilgi gerektiğinde her zaman Google Search aracını kullan. Cevaplarını Türkçe, samimi ve güvenilir kaynaklara dayandırarak ver." }] 
+                            parts: [{ text: "Adın Halit Evin Aİ. Google Search kullanarak en güncel ve doğru bilgiyi ver. Türkçe, samimi ve profesyonel ol." }] 
                         }
                     })
                 });
 
+                if (!response.ok) throw new Error("API Hatası");
+
                 const data = await response.json();
-                const candidate = data.candidates?.[0];
-                const aiText = candidate?.content?.parts?.[0]?.text || "Maalesef bilgiye ulaşamadım.";
-                
-                // Kaynakları ayıkla (Grounding Metadata)
-                const sources = candidate?.groundingMetadata?.groundingAttributions || [];
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Üzgünüm, şu an bir sorun yaşıyorum.";
+                const sources = data.candidates?.[0]?.groundingMetadata?.groundingAttributions || [];
                 
                 appendMessage('ai', aiText, sources);
             } catch (error) {
-                appendMessage('ai', "Bir hata oluştu. İnternet bağlantınızı veya API anahtarınızı kontrol edin.");
+                appendMessage('ai', "Bağlantı hatası oluştu. Lütfen internetini veya API anahtarını kontrol et.");
             } finally {
-                document.getElementById('loading').classList.add('hidden');
+                loader.classList.add('hidden');
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
 
+        // Baloncuk Oluşturma
         function appendMessage(role, text, sources = []) {
-            const chatBox = document.getElementById('chat-box');
             const wrapper = document.createElement('div');
-            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} w-full message-anim mb-4`;
             
             const bubble = document.createElement('div');
-            bubble.className = `p-4 max-w-[85%] shadow-sm ${role === 'user' ? 'user-bubble' : 'ai-bubble border border-slate-100'}`;
+            bubble.className = `p-4 max-w-[85%] sm:max-w-[75%] ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
             
             // Metin içeriği
-            const textContent = document.createElement('div');
-            textContent.innerText = text;
-            bubble.appendChild(textContent);
+            const textEl = document.createElement('div');
+            textEl.className = "text-sm sm:text-base leading-relaxed whitespace-pre-wrap";
+            textEl.innerText = text;
+            bubble.appendChild(textEl);
 
-            // Kaynaklar (Eğer varsa)
+            // Kaynaklar
             if (sources.length > 0) {
-                const sourceContainer = document.createElement('div');
-                sourceContainer.className = "mt-3 pt-2 border-t border-slate-100 flex flex-wrap gap-1";
-                const label = document.createElement('span');
-                label.className = "text-[9px] text-slate-400 block w-full mb-1";
-                label.innerText = "KAYNAKLAR:";
-                sourceContainer.appendChild(label);
-
-                sources.forEach((src, index) => {
+                const sourceDiv = document.createElement('div');
+                sourceDiv.className = "mt-3 pt-2 border-t border-slate-100 flex flex-wrap gap-2";
+                sources.forEach(src => {
                     if (src.web) {
                         const link = document.createElement('a');
                         link.href = src.web.uri;
                         link.target = "_blank";
-                        link.className = "source-tag";
-                        link.innerText = src.web.title || `Kaynak ${index + 1}`;
-                        sourceContainer.appendChild(link);
+                        link.className = "text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded hover:bg-blue-50 hover:text-blue-600 transition";
+                        link.innerText = "🌐 " + (src.web.title.substring(0, 20) + "...");
+                        sourceDiv.appendChild(link);
                     }
                 });
-                bubble.appendChild(sourceContainer);
+                bubble.appendChild(sourceDiv);
             }
 
             wrapper.appendChild(bubble);
@@ -160,12 +209,13 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        document.getElementById('user-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
+        // Tetikleyiciler
+        sendBtn.addEventListener('click', handleSend);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSend();
         });
     </script>
 </body>
 </html>
-
 
 
