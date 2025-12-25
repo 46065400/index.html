@@ -57,7 +57,7 @@
     "store": true
   }'
 
-        const apiKey = curl https://api.openai.com/v1/responses \
+        const apiKey = "curl https://api.openai.com/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer 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" \
   -d '{
@@ -65,7 +65,7 @@
     "input": "write a haiku about ai",
     "store": true
   }'
-
+"; 
 
         async function send() {
             const input = document.getElementById('prompt');
@@ -118,7 +118,5 @@
     </script>
 </body>
 </html>
-
- 
 
 
