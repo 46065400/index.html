@@ -2,120 +2,192 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halit Evin Aİ</title>
-    <!-- Harici dosya bağımlılığı olmadan Tailwind ve İkonlar -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Halit Evin AI | Imagen 4.0 & Nano</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background-color: #f1f5f9; }
-        .chat-container { height: calc(100vh - 160px); overflow-y: auto; }
-        .ai-bubble { background: white; border-radius: 15px 15px 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .user-bubble { background: #2563eb; color: white; border-radius: 15px 15px 0 15px; }
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap');
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Fira Code', monospace; }
+        #matrix { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.3; }
+        .ui { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; background: rgba(0,0,0,0.85); }
+        .header { background: #0a0a0a; border-bottom: 2px solid #e11d48; padding: 12px; box-shadow: 0 0 15px rgba(225,29,72,0.4); }
+        .chat { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .bubble { max-width: 85%; padding: 12px 16px; border-radius: 8px; font-size: 14px; line-height: 1.5; border: 1px solid transparent; }
+        .ai { background: rgba(10, 20, 10, 0.9); color: #00ff41; border-color: rgba(0, 255, 65, 0.3); align-self: flex-start; }
+        .user { background: rgba(225, 29, 72, 0.8); color: #fff; align-self: flex-end; }
+        .input-box { background: #050505; border-top: 1px solid #333; padding: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+        input { background: #111 !important; border: 1px solid #444 !important; color: #00ff41 !important; width: 100%; padding: 14px; border-radius: 6px; outline: none; font-size: 16px; }
+        .source { font-size: 10px; color: #60a5fa; display: inline-block; margin: 4px 6px 0 0; border: 1px solid #60a5fa; padding: 1px 4px; border-radius: 3px; }
+        .loader-bar { height: 3px; width: 0; background: #e11d48; position: absolute; top: 0; transition: width 0.4s ease; box-shadow: 0 0 10px #e11d48; }
+        .model-tag { font-size: 9px; padding: 2px 6px; border-radius: 10px; margin-bottom: 5px; display: inline-block; font-weight: bold; text-transform: uppercase; }
+        .tag-search { background: #4285f4; color: white; }
+        .tag-imagen { background: #f4b400; color: black; }
+        .tag-banana { background: #00ff41; color: black; }
+        img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #444; cursor: pointer; }
     </style>
 </head>
-<body class="flex flex-col h-screen">
-
-    <!-- Navbar -->
-    <nav class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
-        <h1 class="font-bold italic text-xl">Halit Evin Aİ</h1>
-        <button onclick="location.reload()" class="text-white"><i class="fas fa-sync-alt"></i></button>
-    </nav>
-
-    <!-- Ana Ekran -->
-    <div id="home" class="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-6">
-        <div class="bg-blue-100 p-6 rounded-full text-blue-600">
-            <i class="fas fa-robot text-5xl"></i>
-        </div>
-        <div>
-            <h2 class="text-2xl font-bold italic">Hoş Geldiniz</h2>
-            <p class="text-gray-600">Size nasıl yardımcı olabilirim?</p>
-        </div>
-        <div class="grid grid-cols-2 gap-4 w-full max-w-sm">
-            <button onclick="startChat('Ev İşleri')" class="bg-white p-4 rounded-xl shadow border hover:bg-blue-50">Ev İşleri</button>
-            <button onclick="startChat('Çocuklar')" class="bg-white p-4 rounded-xl shadow border hover:bg-blue-50">Çocuklar</button>
-            <button onclick="startChat('Mutfak')" class="bg-white p-4 rounded-xl shadow border hover:bg-blue-50">Mutfak</button>
-            <button onclick="startChat('Genel')" class="bg-white p-4 rounded-xl shadow border hover:bg-blue-50">Soru Sor</button>
-        </div>
-    </div>
-
-    <!-- Sohbet Ekranı -->
-    <div id="chat" class="hidden flex-1 flex flex-col bg-gray-50">
-        <div class="bg-white p-3 border-b flex items-center">
-            <button onclick="showHome()" class="mr-3 text-gray-500"><i class="fas fa-arrow-left"></i></button>
-            <span id="chat-title" class="font-bold">Sohbet</span>
-        </div>
-        <div id="messages" class="chat-container p-4 space-y-4 flex flex-col"></div>
-        <div id="loader" class="hidden px-4 py-2 text-xs italic text-gray-400">Halit Evin yazıyor...</div>
-        <div class="p-4 bg-white border-t flex gap-2">
-            <input type="text" id="prompt" placeholder="Mesajınızı yazın..." class="flex-1 border p-2 rounded-lg outline-none">
-            <button onclick="send()" class="bg-blue-600 text-white px-4 py-2 rounded-lg"><i class="fas fa-paper-plane"></i></button>
-        </div>
+<body>
+    <canvas id="matrix"></canvas>
+    <div class="ui">
+        <header class="header flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="https://upload.wikimedia.org/wikipedia/tr/b/ae/Mill%C3%AE_E%C4%9Fitim_Bakanl%C4%B1%C4%9F%C4%B1_logo.svg" class="h-8 m-0 border-0">
+                <div>
+                    <h1 class="text-white font-bold text-xs tracking-widest">HALIT EVIN AI HYBRID</h1>
+                    <div class="flex gap-1 mt-1">
+                        <span class="text-[8px] text-yellow-400 font-bold">IMAGEN 4.0</span>
+                        <span class="text-[8px] text-green-400 font-bold">• NANO BANANA</span>
+                    </div>
+                </div>
+            </div>
+            <div id="status" class="text-[9px] text-green-500 font-mono">SYSTEM_ONLINE</div>
+        </header>
+        <div id="loader" class="loader-bar"></div>
+        <main id="chat" class="chat">
+            <div class="bubble ai">
+                > Hibrit motorlar yüklendi.<br>
+                > Imagen 4.0 (HQ) ve Nano Banana (Fast) devrede.<br>
+                > Google Search senkronize edildi.<br>
+                > Komut bekliyorum...
+            </div>
+        </main>
+        <footer class="input-box">
+            <div class="flex gap-2">
+                <input type="text" id="userInput" placeholder="Sorun veya 'kaliteli çiz' diyerek Imagen'ı çağırın...">
+                <button id="sendBtn" class="bg-red-600 text-white px-5 rounded active:scale-95 transition-all"><i class="fas fa-bolt"></i></button>
+            </div>
+        </footer>
     </div>
 
     <script>
-        const apiKey = ""; curl -X POST "https://generativelanguage.googleapis.com/v1beta/interactions" \
--H "Content-Type: application/json" \
--H "x-goog-api-key: $GEMINI_API_KEY" \
--d '{
-    "model": "gemini-3-flash-preview",
-    "input": "Tell me a short joke about programming."
-}'
-        let cat = "Genel";
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const drops = Array(Math.floor(canvas.width/15)).fill(1);
+        function draw() {
+            ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = "#0F0"; ctx.font = "15px monospace";
+            drops.forEach((y, i) => {
+                const text = String.fromCharCode(Math.random() * 128);
+                ctx.fillText(text, i*15, y*15);
+                if(y*15 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            });
+        }
+        setInterval(draw, 50);
 
-        function startChat(selected) {
-            cat = selected;
-            document.getElementById('home').classList.add('hidden');
-            document.getElementById('chat').classList.remove('hidden');
-            document.getElementById('chat-title').innerText = "Halit Evin - " + cat;
-            if(document.getElementById('messages').children.length === 0) {
-                addMsg('ai', `Merhaba! Ben Halit Evin Aİ. ${cat} konusunda size nasıl yardımcı olabilirim?`);
+        const apiKey = ""; // API KEY BURAYA
+        const chat = document.getElementById('chat');
+        const input = document.getElementById('userInput');
+        const loader = document.getElementById('loader');
+
+        async function processTask() {
+            const prompt = input.value.trim();
+            if(!prompt || !apiKey) return;
+
+            addMsg('user', prompt);
+            input.value = '';
+            loader.style.width = "40%";
+            document.getElementById('status').innerText = "GENERATING...";
+
+            // Model Seçim Mantığı
+            const isHighQuality = /(kaliteli|gerçekçi|ultra|hq|detaylı|fotoreal|pro|4.0)/i.test(prompt);
+            const isVisual = /(çiz|yap|resim|görsel|tasarla|oluştur|tablo)/i.test(prompt);
+
+            try {
+                let resultData = { text: '', imageUrl: '', modelUsed: '' };
+
+                if (isVisual) {
+                    if (isHighQuality) {
+                        // IMAGEN 4.0 ÇAĞRISI
+                        resultData.modelUsed = "Imagen 4.0 (HQ)";
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                            method: 'POST',
+                            body: JSON.stringify({ instances: [{ prompt: prompt }], parameters: { sampleCount: 1 } })
+                        });
+                        const data = await res.json();
+                        resultData.imageUrl = `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
+                    } else {
+                        // NANO BANANA ÇAĞRISI
+                        resultData.modelUsed = "Nano Banana (Fast)";
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                contents: [{parts: [{text: prompt}]}],
+                                generationConfig: { responseModalities: ["IMAGE"] }
+                            })
+                        });
+                        const data = await res.json();
+                        resultData.imageUrl = `data:image/png;base64,${data.candidates[0].content.parts.find(p => p.inlineData).inlineData.data}`;
+                    }
+                } else {
+                    // GOOGLE SEARCH (GEMINI 2.5 FLASH)
+                    resultData.modelUsed = "Google Search AI";
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            contents: [{parts: [{text: prompt}]}],
+                            tools: [{"google_search": {}}]
+                        })
+                    });
+                    const data = await res.json();
+                    const candidate = data.candidates[0];
+                    resultData.text = candidate.content.parts[0].text;
+                    resultData.sources = candidate.groundingMetadata?.groundingAttributions || [];
+                }
+
+                renderAI(resultData);
+            } catch(e) {
+                addMsg('ai', "> HATA: İşlem sırasında bir sorun oluştu. API anahtarınızı veya limitlerinizi kontrol edin.");
+            } finally {
+                loader.style.width = "0";
+                document.getElementById('status').innerText = "SYSTEM_READY";
             }
         }
 
-        function showHome() {
-            document.getElementById('chat').classList.add('hidden');
-            document.getElementById('home').classList.remove('hidden');
+        function renderAI(data) {
+            const div = document.createElement('div');
+            div.className = "bubble ai";
+            
+            let tagClass = "tag-search";
+            if(data.modelUsed.includes("Imagen")) tagClass = "tag-imagen";
+            if(data.modelUsed.includes("Nano")) tagClass = "tag-banana";
+            
+            let html = `<span class="model-tag ${tagClass}">${data.modelUsed}</span><br>`;
+            
+            if(data.text) html += "> " + data.text.replace(/\n/g, '<br>> ');
+            
+            if(data.sources && data.sources.length > 0) {
+                html += "<br><div class='mt-2'>";
+                data.sources.forEach(s => {
+                    html += `<a href="${s.web?.uri}" target="_blank" class="source">${s.web?.title}</a>`;
+                });
+                html += "</div>";
+            }
+            
+            if(data.imageUrl) {
+                html += `<img src="${data.imageUrl}" onclick="window.open(this.src)">`;
+            }
+            
+            div.innerHTML = html;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
         }
 
         function addMsg(role, text) {
-            const container = document.getElementById('messages');
-            const div = document.createElement('div');
-            div.className = `p-3 max-w-[80%] ${role === 'ai' ? 'ai-bubble self-start' : 'user-bubble self-end'}`;
-            div.innerText = text;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
+            const d = document.createElement('div');
+            d.className = `bubble ${role}`;
+            d.innerHTML = text;
+            chat.appendChild(d);
+            chat.scrollTop = chat.scrollHeight;
         }
 
-        async function send() {
-            const input = document.getElementById('prompt');
-            const val = input.value.trim();
-            if(!val) return;
-
-            addMsg('user', val);
-            input.value = '';
-            document.getElementById('loader').classList.remove('hidden');
-
-            const sys = `Sen Halit Evin Aİ'sin. Kibar, aile dostu, Türkçe konuşan bir yardımcısın. Konu: ${cat}.`;
-
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: val }] }],
-                        systemInstruction: { parts: [{ text: sys }] }
-                    })
-                });
-                const data = await res.json();
-                addMsg('ai', data.candidates[0].content.parts[0].text);
-            } catch (e) {
-                addMsg('ai', "Bir hata oluştu.");
-            } finally {
-                document.getElementById('loader').classList.add('hidden');
-            }
-        }
+        document.getElementById('sendBtn').onclick = processTask;
+        input.onkeypress = (e) => e.key === 'Enter' && processTask();
     </script>
 </body>
 </html>
+
+
 
