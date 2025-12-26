@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Halit Evin AI | Flash Terminal</title>
+    <title>Halit Evin AI | Stable Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -18,13 +18,13 @@
 
         .ui-layer {
             position: relative; z-index: 1; display: flex; flex-direction: column;
-            height: 100vh; background: rgba(0, 0, 0, 0.8);
+            height: 100vh; background: rgba(0, 0, 0, 0.85);
         }
 
         .header {
             background: rgba(10, 10, 10, 0.95);
             border-bottom: 2px solid #e11d48;
-            box-shadow: 0 0 20px rgba(225, 29, 72, 0.3);
+            box-shadow: 0 0 15px rgba(225, 29, 72, 0.3);
         }
 
         .chat-scroll {
@@ -38,7 +38,7 @@
         }
 
         .ai-bubble {
-            background: rgba(10, 20, 10, 0.9); color: #00ff41;
+            background: rgba(15, 20, 15, 0.9); color: #00ff41;
             border: 1px solid rgba(0, 255, 65, 0.3); border-bottom-left-radius: 2px;
             align-self: flex-start; text-shadow: 0 0 2px rgba(0, 255, 65, 0.3);
         }
@@ -80,8 +80,6 @@
             color: #00ff41 !important; caret-color: #e11d48;
         }
 
-        input:focus { border-color: #00ff41 !important; }
-
         .img-card {
             margin-top: 12px; border-radius: 8px; overflow: hidden;
             border: 1px solid #00ff41; max-width: 400px;
@@ -104,13 +102,13 @@
                 <div>
                     <h1 class="font-bold text-white text-md tracking-widest">HALIT EVIN AI</h1>
                     <div class="text-[8px] text-green-500 font-bold uppercase tracking-widest flex items-center gap-2">
-                        <span>v1.5 Flash Stable</span>
+                        <span>Terminal v2.1</span>
                         <span class="text-blue-400">● Google Search</span>
                     </div>
                 </div>
             </div>
             <div class="text-[#00ff41] text-[10px] font-mono animate-pulse">
-                NET: SECURE
+                STATUS: CONNECTED
             </div>
         </header>
 
@@ -120,16 +118,15 @@
 
         <main id="chat-box" class="chat-scroll">
             <div class="bubble ai-bubble">
-                > Sistem başlatıldı: <b>Gemini 1.5 Flash</b> çekirdeği aktif.<br>
-                > Google Arama modülü yüklendi.<br>
-                > Görsel motoru (Nano Banana) beklemede.<br>
-                > Komut girin:
+                > Bağlantı onarıldı.<br>
+                > Çekirdek: <b>gemini-1.5-flash-latest</b> (En Stabil)<br>
+                > Komut bekleniyor...
             </div>
         </main>
 
         <footer class="input-area">
             <div class="max-w-4xl mx-auto flex gap-3">
-                <input type="text" id="userInput" placeholder="Soru sor veya 'çiz' komutu ver..." 
+                <input type="text" id="userInput" placeholder="Sorun veya 'çiz' komutu verin..." 
                        class="flex-1 p-4 rounded outline-none text-sm font-bold shadow-inner">
                 <button id="sendBtn" class="bg-black border border-green-500 text-green-500 w-14 h-14 rounded flex items-center justify-center hover:bg-green-500 hover:text-black transition-all shadow-[0_0_10px_rgba(0,255,65,0.2)]">
                     <i class="fas fa-terminal text-xl"></i>
@@ -139,12 +136,12 @@
     </div>
 
     <script>
-        // Matrix Background Script
+        // Matrix Effect
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        const chars = "10"; // Binary rain style
+        const chars = "10XYZ"; 
         const fontSize = 14;
         const columns = canvas.width / fontSize;
         const drops = Array(Math.floor(columns)).fill(1);
@@ -163,14 +160,13 @@
         }
         setInterval(drawMatrix, 50);
 
-        // Resize handler
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
 
         // AI Logic
-        const apiKey = "AIzaSyAYpY_3Mr8wY6gfsl6gBcK1JSJQ2OAuVYs"; // KENDİ API ANAHTARINI BURAYA EKLE
+        const apiKey = "AIzaSyAYpY_3Mr8wY6gfsl6gBcK1JSJQ2OAuVYs"; // API ANAHTARINIZI BURAYA KOYUN
 
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('userInput');
@@ -188,9 +184,8 @@
 
             const isVisual = /(çiz|oluştur|yap|resim|görsel|draw|image|tasarla)/i.test(query);
             
-            // Metin için: gemini-1.5-flash (Google Search destekli)
-            // Görsel için: gemini-2.5-flash-image-preview (Görsel üretimi destekli)
-            const model = isVisual ? "gemini-2.5-flash-image-preview" : "gemini-1.5-flash";
+            // DÜZELTME: 'latest' etiketi eklendi, böylece model bulunamadı hatası giderildi.
+            const model = isVisual ? "gemini-2.5-flash-image-preview" : "gemini-1.5-flash-latest";
 
             try {
                 const payload = {
@@ -198,10 +193,8 @@
                 };
 
                 if (!isVisual) {
-                    // Sadece metin isteklerinde Google Search'ü açıyoruz
                     payload.tools = [{ "google_search": {} }];
                 } else {
-                    // Görsel isteklerinde modaliteyi ayarlıyoruz
                     payload.generationConfig = { responseModalities: ['TEXT', 'IMAGE'] };
                 }
 
@@ -238,7 +231,6 @@
                     b.className = "bubble ai-bubble";
                     let htmlContent = "> " + p.text.replace(/\n/g, '<br>> ');
 
-                    // Google Search Kaynaklarını Göster
                     if (sources.length > 0) {
                         htmlContent += `<br><br><div class="text-xs text-green-400 opacity-80 mb-1 border-t border-green-900 pt-2">REFERANSLAR:</div>`;
                         sources.forEach(src => {
@@ -275,6 +267,11 @@
     </script>
 </body>
 </html>
+
+
+
+
+                
 
 
 
