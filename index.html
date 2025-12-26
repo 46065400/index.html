@@ -2,64 +2,199 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Halit Evin AI | Veo 3.1 & Imagen 4.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Halit Evin AI | Terminal v3.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap');
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Fira Code', monospace; }
-        #matrix { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.3; }
-        .ui { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; background: rgba(0,0,0,0.88); }
-        .header { background: #0a0a0a; border-bottom: 2px solid #e11d48; padding: 12px; box-shadow: 0 0 20px rgba(225,29,72,0.5); }
-        .chat { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        .bubble { max-width: 88%; padding: 12px 16px; border-radius: 8px; font-size: 14px; line-height: 1.5; border: 1px solid transparent; }
-        .ai { background: rgba(10, 20, 10, 0.95); color: #00ff41; border-color: rgba(0, 255, 65, 0.4); align-self: flex-start; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .user { background: linear-gradient(135deg, #e11d48, #9f1239); color: #fff; align-self: flex-end; }
-        .input-box { background: #050505; border-top: 1px solid #333; padding: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-        input { background: #111 !important; border: 1px solid #444 !important; color: #00ff41 !important; width: 100%; padding: 14px; border-radius: 8px; outline: none; font-size: 16px; transition: border 0.3s; }
-        input:focus { border-color: #00ff41 !important; }
-        .model-tag { font-size: 8px; padding: 2px 8px; border-radius: 4px; margin-bottom: 6px; display: inline-block; font-weight: bold; letter-spacing: 1px; }
-        .tag-veo { background: #9333ea; color: white; } /* Purple for Veo */
-        .tag-imagen { background: #f4b400; color: black; } /* Gold for Imagen */
-        .tag-search { background: #4285f4; color: white; } /* Blue for Search */
-        .tag-banana { background: #00ff41; color: black; } /* Green for Nano */
-        img, video { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #333; display: block; }
-        .loader-bar { height: 3px; width: 0; background: linear-gradient(to right, #e11d48, #00ff41); position: absolute; top: 0; transition: width 0.4s; z-index: 10; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #e11d48; border-radius: 10px; }
+        
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+            background-color: #000; font-family: 'Fira Code', monospace;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Matrix Arkaplan */
+        #matrix-canvas {
+            position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.25;
+        }
+
+        /* Ana Katman */
+        .app-container {
+            position: relative; z-index: 10;
+            display: flex; flex-direction: column;
+            height: 100vh; height: -webkit-fill-available; /* Mobil Safari Fix */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.95));
+        }
+
+        /* Başlık Alanı */
+        header {
+            background: rgba(10, 10, 10, 0.95);
+            border-bottom: 2px solid #e11d48;
+            padding: 12px 16px;
+            flex-shrink: 0;
+        }
+
+        /* Mesajlaşma Alanı */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding-bottom: 100px; /* Giriş kutusuna çarpmaması için pay */
+        }
+
+        /* Mesaj Balonları */
+        .bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .ai-message {
+            background: rgba(15, 25, 15, 0.9);
+            color: #00ff41;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .user-message {
+            background: #e11d48;
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2);
+        }
+
+        /* Giriş Alanı (Sabit ve Görünür) */
+        .input-wrapper {
+            background: #0a0a0a;
+            border-top: 1px solid #333;
+            padding: 12px 16px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        input {
+            flex: 1;
+            background: #1a1a1a !important;
+            border: 1px solid #444 !important;
+            color: #00ff41 !important;
+            padding: 12px 16px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 16px; /* Mobil zoomu engellemek için */
+        }
+
+        input:focus {
+            border-color: #e11d48 !important;
+        }
+
+        .send-btn {
+            background: #e11d48;
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .send-btn:active {
+            transform: scale(0.9);
+            background: #9f1239;
+        }
+
+        /* Etiketler */
+        .tag {
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            display: inline-block;
+        }
+        .tag-veo { background: #9333ea; color: #fff; }
+        .tag-imagen { background: #fbbf24; color: #000; }
+        .tag-nano { background: #22c55e; color: #000; }
+        .tag-search { background: #3b82f6; color: #fff; }
+
+        /* Medya */
+        img, video {
+            width: 100%;
+            max-width: 320px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #333;
+        }
+
+        /* Yükleme Çubuğu */
+        .loading-bar {
+            height: 2px;
+            width: 0%;
+            background: #00ff41;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: width 0.3s;
+            box-shadow: 0 0 10px #00ff41;
+        }
     </style>
 </head>
 <body>
-    <canvas id="matrix"></canvas>
-    <div class="ui">
-        <header class="header flex items-center justify-between">
+
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="app-container">
+        <header class="flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <img src="https://upload.wikimedia.org/wikipedia/tr/b/ae/Mill%C3%AE_E%C4%9Fitim_Bakanl%C4%B1%C4%9F%C4%B1_logo.svg" class="h-9 m-0 border-0">
+                <img src="https://upload.wikimedia.org/wikipedia/tr/b/ae/Mill%C3%AE_E%C4%9Fitim_Bakanl%C4%B1%C4%9F%C4%B1_logo.svg" 
+                     class="h-8 w-8 m-0 p-0 border-0 bg-transparent" alt="MEB">
                 <div>
-                    <h1 class="text-white font-bold text-sm tracking-tighter">HALIT EVIN AI <span class="text-red-500">ULTIMATE</span></h1>
-                    <div class="flex gap-1 mt-0.5">
-                        <span class="text-[7px] text-purple-400 font-bold">VEO 3.1</span>
-                        <span class="text-[7px] text-yellow-500 font-bold">IMAGEN 4.0</span>
-                        <span class="text-[7px] text-green-500 font-bold">NANO</span>
-                    </div>
+                    <h1 class="text-white text-xs font-bold tracking-tighter">HALIT EVIN AI <span class="text-red-500">PRO</span></h1>
+                    <p class="text-[8px] text-green-500 font-mono">MULTI-ENGINE ACTIVE</p>
                 </div>
             </div>
-            <div id="status" class="text-[10px] text-green-500 font-mono animate-pulse">● ONLINE</div>
+            <div id="status-light" class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></div>
         </header>
-        <div id="loader" class="loader-bar"></div>
-        <main id="chat" class="chat">
-            <div class="bubble ai">
-                > Çekirdek güncellendi: <b>Veo 3.1 & Imagen 4.0</b><br>
-                > Video üretimi için "video" veya "hareketli" kelimelerini kullanın.<br>
-                > Google Search senkronizasyonu aktif.<br>
-                > Komutunuz:
+
+        <div id="loader" class="loading-bar"></div>
+
+        <main id="chat-box" class="chat-area">
+            <div class="bubble ai-message">
+                > Bağlantı kuruldu.<br>
+                > <b>Veo 3.1</b>, <b>Imagen 4.0</b> ve <b>Google Search</b> hazır.<br>
+                > Sorunuzu aşağıdaki alana yazabilirsiniz:
             </div>
         </main>
-        <footer class="input-box">
-            <div class="flex gap-2">
-                <input type="text" id="userInput" placeholder="Soru sor, resim çiz veya video üret...">
-                <button id="sendBtn" class="bg-red-600 text-white px-5 rounded-lg active:scale-90 transition-all shadow-lg">
+
+        <footer class="input-wrapper">
+            <div class="input-container">
+                <input type="text" id="userInput" placeholder="Mesajınızı buraya yazın..." autocomplete="off">
+                <button id="sendBtn" class="send-btn">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
@@ -67,149 +202,151 @@
     </div>
 
     <script>
-        const canvas = document.getElementById('matrix');
+        // Matrix Efekti
+        const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        const drops = Array(Math.floor(canvas.width/15)).fill(1);
-        function draw() {
-            ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = "#033"; ctx.font = "15px monospace";
-            drops.forEach((y, i) => {
-                const text = String.fromCharCode(Math.random() * 128);
-                ctx.fillText(text, i*15, y*15);
-                if(y*15 > canvas.height && Math.random() > 0.975) drops[i] = 0;
-                drops[i]++;
-            });
-        }
-        setInterval(draw, 50);
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const alphabet = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
 
-        const apiKey = "AIzaSyAYpY_3Mr8wY6gfsl6gBcK1JSJQ2OAuVYs"; // <--- BURAYA API KEY'INIZI GIRIN
-        const chat = document.getElementById('chat');
-        const input = document.getElementById('userInput');
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#0F0";
+            ctx.font = fontSize + "px 'Fira Code'";
+            for (let i = 0; i < drops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        // AI İşlemleri
+        const apiKey = "AIzaSyAYpY_3Mr8wY6gfsl6gBcK1JSJQ2OAuVYs"; // <--- BURAYA KENDİ API KEY'İNİZİ GİRİN
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
         const loader = document.getElementById('loader');
 
-        async function handleCommand() {
-            const prompt = input.value.trim();
-            if(!prompt || !apiKey) return;
+        async function sendMessage() {
+            const query = userInput.value.trim();
+            if (!query || !apiKey) return;
 
-            addMsg('user', prompt);
-            input.value = '';
-            loader.style.width = "45%";
-            document.getElementById('status').innerText = "GENERATING...";
-
-            const isVideo = /(video|hareketli|veo|animasyon|film)/i.test(prompt);
-            const isHQ = /(kaliteli|gerçekçi|hq|detaylı|fotoreal|imagen|4.0)/i.test(prompt);
-            const isVisual = /(çiz|yap|resim|görsel|tasarla|tablo|oluştur)/i.test(prompt) || isVideo;
+            addMessage('user', query);
+            userInput.value = '';
+            loader.style.width = "40%";
+            
+            const isVideo = /(video|hareketli|veo|animasyon)/i.test(query);
+            const isHQ = /(kaliteli|gerçekçi|hq|imagen|fotoreal|4.0)/i.test(query);
+            const isDraw = /(çiz|yap|resim|görsel|oluştur)/i.test(query) || isVideo;
 
             try {
-                let aiOutput = { text: '', mediaUrl: '', type: 'text', model: '' };
+                let aiData = { text: '', media: '', model: '', type: '' };
 
                 if (isVideo) {
-                    // VEO 3.1 VIDEO GENERATION
-                    aiOutput.model = "Veo 3.1 (Cinematic)";
-                    aiOutput.type = "video";
+                    aiData.model = "Veo 3.1";
+                    aiData.type = "video";
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-generate-001:predict?key=${apiKey}`, {
                         method: 'POST',
-                        body: JSON.stringify({ instances: [{ prompt: prompt }] })
+                        body: JSON.stringify({ instances: [{ prompt: query }] })
                     });
-                    const data = await res.json();
-                    aiOutput.mediaUrl = `data:video/mp4;base64,${data.predictions[0].bytesBase64Encoded}`;
+                    const d = await res.json();
+                    aiData.media = `data:video/mp4;base64,${d.predictions[0].bytesBase64Encoded}`;
                 } 
-                else if (isVisual && isHQ) {
-                    // IMAGEN 4.0 PHOTO GENERATION
-                    aiOutput.model = "Imagen 4.0 (Ultra HQ)";
-                    aiOutput.type = "image";
+                else if (isDraw && isHQ) {
+                    aiData.model = "Imagen 4.0";
+                    aiData.type = "image";
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
                         method: 'POST',
-                        body: JSON.stringify({ instances: [{ prompt: prompt }], parameters: { sampleCount: 1 } })
+                        body: JSON.stringify({ instances: [{ prompt: query }], parameters: { sampleCount: 1 } })
                     });
-                    const data = await res.json();
-                    aiOutput.mediaUrl = `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
+                    const d = await res.json();
+                    aiData.media = `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
                 }
-                else if (isVisual) {
-                    // NANO BANANA FAST GENERATION
-                    aiOutput.model = "Nano Banana (Fast)";
-                    aiOutput.type = "image";
+                else if (isDraw) {
+                    aiData.model = "Nano Banana";
+                    aiData.type = "image";
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
                         method: 'POST',
-                        body: JSON.stringify({
-                            contents: [{parts: [{text: prompt}]}],
-                            generationConfig: { responseModalities: ["IMAGE"] }
-                        })
+                        body: JSON.stringify({ contents: [{parts:[{text:query}]}], generationConfig: {responseModalities:["IMAGE"]} })
                     });
-                    const data = await res.json();
-                    aiOutput.mediaUrl = `data:image/png;base64,${data.candidates[0].content.parts.find(p => p.inlineData).inlineData.data}`;
+                    const d = await res.json();
+                    aiData.media = `data:image/png;base64,${d.candidates[0].content.parts.find(p=>p.inlineData).inlineData.data}`;
                 }
                 else {
-                    // GOOGLE SEARCH (GEMINI 2.5 FLASH)
-                    aiOutput.model = "Google Search AI";
+                    aiData.model = "Google Search AI";
+                    aiData.type = "text";
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                         method: 'POST',
-                        body: JSON.stringify({
-                            contents: [{parts: [{text: prompt}]}],
-                            tools: [{"google_search": {}}]
-                        })
+                        body: JSON.stringify({ contents: [{parts:[{text:query}]}], tools: [{"google_search":{}}] })
                     });
-                    const data = await res.json();
-                    const candidate = data.candidates[0];
-                    aiOutput.text = candidate.content.parts[0].text;
-                    aiOutput.sources = candidate.groundingMetadata?.groundingAttributions || [];
+                    const d = await res.json();
+                    aiData.text = d.candidates[0].content.parts[0].text;
+                    aiData.sources = d.candidates[0].groundingMetadata?.groundingAttributions || [];
                 }
 
-                renderAI(aiOutput);
-            } catch(e) {
-                addMsg('ai', "> HATA: Modül yanıt vermedi. API anahtarını veya model yetkilerini kontrol edin.");
+                renderAIResponse(aiData);
+            } catch (err) {
+                addMessage('ai', "> HATA: API yanıt vermedi. Anahtarınızı kontrol edin.");
             } finally {
-                loader.style.width = "0";
-                document.getElementById('status').innerText = "ONLINE";
+                loader.style.width = "0%";
             }
         }
 
-        function renderAI(data) {
-            const div = document.createElement('div');
-            div.className = "bubble ai";
+        function renderAIResponse(data) {
+            const container = document.createElement('div');
+            container.className = "bubble ai-message";
             
-            let tagClass = "tag-search";
-            if(data.model.includes("Veo")) tagClass = "tag-veo";
-            if(data.model.includes("Imagen")) tagClass = "tag-imagen";
-            if(data.model.includes("Nano")) tagClass = "tag-banana";
-            
-            let html = `<span class="model-tag ${tagClass}">${data.model}</span><br>`;
+            let tagType = "tag-search";
+            if(data.model.includes("Veo")) tagType = "tag-veo";
+            if(data.model.includes("Imagen")) tagType = "tag-imagen";
+            if(data.model.includes("Banana")) tagType = "tag-nano";
+
+            let html = `<span class="tag ${tagType}">${data.model}</span><br>`;
             
             if(data.text) html += "> " + data.text.replace(/\n/g, '<br>> ');
             
             if(data.sources && data.sources.length > 0) {
-                html += "<div class='mt-2 flex flex-wrap gap-1'>";
+                html += "<div class='mt-2 border-t border-green-900 pt-1'>";
                 data.sources.forEach(s => {
-                    html += `<a href="${s.web?.uri}" target="_blank" class="text-[9px] text-blue-400 underline decoration-blue-800 mr-2">[KAYNAK]</a>`;
+                    html += `<a href="${s.web?.uri}" target="_blank" class="text-[10px] text-blue-400 mr-2">[KAYNAK]</a>`;
                 });
                 html += "</div>";
             }
-            
-            if(data.type === "video" && data.mediaUrl) {
-                html += `<video src="${data.mediaUrl}" controls autoplay loop></video>`;
-            } else if(data.type === "image" && data.mediaUrl) {
-                html += `<img src="${data.mediaUrl}" onclick="window.open(this.src)">`;
+
+            if(data.type === "video") {
+                html += `<video src="${data.media}" controls autoplay loop></video>`;
+            } else if(data.type === "image") {
+                html += `<img src="${data.media}" onclick="window.open(this.src)">`;
             }
-            
-            div.innerHTML = html;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
+
+            container.innerHTML = html;
+            chatBox.appendChild(container);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        function addMsg(role, text) {
-            const d = document.createElement('div');
-            d.className = `bubble ${role}`;
-            d.innerHTML = text;
-            chat.appendChild(d);
-            chat.scrollTop = chat.scrollHeight;
+        function addMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `bubble ${role === 'ai' ? 'ai-message' : 'user-message'}`;
+            div.innerHTML = (role === 'ai' ? '> ' : '') + text.replace(/\n/g, '<br>');
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        document.getElementById('sendBtn').onclick = handleCommand;
-        input.onkeypress = (e) => e.key === 'Enter' && handleCommand();
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
     </script>
 </body>
 </html>
+
+
+
+
 
 
 
