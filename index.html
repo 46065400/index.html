@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Halit Evin AI | v2 Beta Ultimate</title>
+    <title>Halit Evin AI | v2 Beta</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -64,7 +64,6 @@
         .user-msg {
             background: var(--primary); color: white;
             align-self: flex-end; border-bottom-right-radius: 4px;
-            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2);
         }
 
         .input-bar {
@@ -99,11 +98,6 @@
         }
         .tag-v2 { background: #3b82f6; color: white; }
 
-        .media-box {
-            margin-top: 12px; border-radius: 12px; overflow: hidden;
-            border: 1px solid #333; background: #000;
-        }
-
         #key-config {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.95); z-index: 1000;
@@ -120,43 +114,43 @@
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 rounded-full bg-green-500"></div>
                 <div>
-                    <h1 class="text-white text-sm font-black tracking-widest uppercase">Halit Evin AI <span class="text-blue-500 text-[10px]">v2 Beta</span></h1>
+                    <h1 class="text-white text-sm font-black tracking-widest uppercase">Halit Evin AI</h1>
                 </div>
             </div>
-            <button onclick="openSettings()" class="text-gray-400"><i class="fas fa-key"></i></button>
+            <!-- Anahtar simgesi ayarlar için gizli ama erişilebilir -->
+            <button onclick="openSettings()" class="text-gray-400 p-2"><i class="fas fa-shield-alt"></i></button>
         </header>
 
         <main id="chat-flow" class="chat-area">
+            <!-- Karşılama Mesajı -->
             <div class="bubble ai-msg">
-                <span class="tag tag-v2">SİSTEM MESAJI</span><br>
-                Merhaba ben Halit Evin AI.<br><br>
-                > Veo 3.1, Imagen 4.0 ve Google Search aktif.<br>
-                > Model çağrısında v2 beta protokolü kullanılıyor.<br>
-                > Size nasıl yardımcı olabilirim?
+                Merhaba ben Halit Evin AI.
             </div>
         </main>
 
         <footer class="input-bar">
             <div class="input-group">
-                <input type="text" id="queryInput" placeholder="Mesajınızı yazın..." autocomplete="off">
+                <input type="text" id="queryInput" placeholder="Mesajınızı buraya bırakın..." autocomplete="off">
                 <button id="sendAction" class="send-btn"><i class="fas fa-paper-plane"></i></button>
             </div>
         </footer>
     </div>
 
+    <!-- API Ayarları Modalı -->
     <div id="key-config">
         <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 w-full max-w-sm">
             <h2 class="text-white font-bold mb-2 uppercase text-xs">API Ayarları</h2>
+            <p class="text-zinc-500 text-[10px] mb-4 italic">Google AI Studio'dan aldığınız yeni anahtarı buraya girin.</p>
             <input type="password" id="keyField" placeholder="AIza..." class="w-full mb-4 bg-zinc-950 p-3 rounded-lg border border-zinc-800 text-sm text-white">
             <div class="flex gap-2">
-                <button onclick="saveApiKey()" class="bg-blue-600 text-white flex-1 py-3 rounded-xl font-bold text-xs">KAYDET</button>
+                <button onclick="saveApiKey()" class="bg-blue-600 text-white flex-1 py-3 rounded-xl font-bold text-xs">ANAHTARI KAYDET</button>
                 <button onclick="closeSettings()" class="bg-zinc-800 text-zinc-400 flex-1 py-3 rounded-xl text-xs">KAPAT</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Matrix Effect
+        // Arka Plan Matrix Efekti
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -172,12 +166,9 @@
         }
         setInterval(draw, 50);
 
-        // --- API ANAHTARI AYARI ---
-        let apiKey = localStorage.getItem('halit_v2_ultimate_key') || "AIzaSyDw6d4UB2Fa0lAIV1UWPYCV3YO0eR74Kr4"; 
+        // API Anahtarı Yönetimi
+        let apiKey = localStorage.getItem('halit_v2_ultimate_key') || ""; 
 
-        const chatFlow = document.getElementById('chat-flow');
-        const queryInput = document.getElementById('queryInput');
-        
         function openSettings() { document.getElementById('key-config').style.display = 'flex'; }
         function closeSettings() { document.getElementById('key-config').style.display = 'none'; }
         
@@ -186,7 +177,7 @@
             if(val) {
                 localStorage.setItem('halit_v2_ultimate_key', val);
                 apiKey = val;
-                addMessage('ai', "> API Anahtarı sisteme başarıyla kaydedildi.");
+                addMessage('ai', "> Sistem güncellendi. Artık hazırız.");
                 closeSettings();
             }
         }
@@ -195,7 +186,7 @@
             const text = queryInput.value.trim();
             if(!text) return;
             if(!apiKey) {
-                addMessage('ai', "> Hata: API Anahtarı bulunamadı. Lütfen anahtar simgesine tıklayarak anahtarınızı girin.");
+                addMessage('ai', "> Lütfen önce bir API anahtarı tanımlayın (Sağ üstteki ikon).");
                 openSettings();
                 return;
             }
@@ -203,96 +194,68 @@
             addMessage('user', text);
             queryInput.value = '';
 
-            const isVideo = /video|veo|hareketli/i.test(text);
-            const isImage = /resim|çiz|foto|imagen/i.test(text) && !isVideo;
-
             try {
-                addMessage('ai', "> Yanıt işleniyor, lütfen bekleyin...", true);
-                const loadingMsg = chatFlow.lastElementChild;
-                const baseUrl = "https://generativelanguage.googleapis.com/v1beta";
+                addMessage('ai', "> ...", true);
+                const loadingMsg = document.getElementById('chat-flow').lastElementChild;
 
-                let res, data;
-                if (isVideo) {
-                    res = await fetch(`${baseUrl}/models/veo-3.1-generate-001:predict?key=${apiKey}`, {
-                        method: 'POST', body: JSON.stringify({ instances: [{ prompt: text }] })
-                    });
-                    data = await res.json();
-                    
-                    if (data.predictions && data.predictions[0]) {
-                        renderResponse({ model: "VEO 3.1", type: "video", media: `data:video/mp4;base64,${data.predictions[0].bytesBase64Encoded}` });
-                    } else {
-                        throw new Error(data.error?.message || "Veo modeli yanıt vermedi. API yetkinizi kontrol edin.");
-                    }
-                } else if (isImage) {
-                    res = await fetch(`${baseUrl}/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
-                        method: 'POST', body: JSON.stringify({ instances: [{ prompt: text }], parameters: { sampleCount: 1 } })
-                    });
-                    data = await res.json();
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ text: text }] }],
+                        tools: [{ "google_search": {} }]
+                    })
+                });
 
-                    if (data.predictions && data.predictions[0]) {
-                        renderResponse({ model: "IMAGEN 4.0", type: "image", media: `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}` });
-                    } else {
-                        throw new Error(data.error?.message || "Imagen modeli yanıt vermedi. API yetkinizi kontrol edin.");
-                    }
-                } else {
-                    res = await fetch(`${baseUrl}/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                        method: 'POST', body: JSON.stringify({ 
-                            contents: [{ parts: [{ text: text }] }], 
-                            tools: [{"google_search":{}}] 
-                        })
-                    });
-                    data = await res.json();
-
-                    if (data.candidates && data.candidates[0]) {
-                        renderResponse({ 
-                            model: "GEMINI v2 BETA", 
-                            type: "text", 
-                            text: data.candidates[0].content.parts[0].text, 
-                            sources: data.candidates[0].groundingMetadata?.groundingAttributions 
-                        });
-                    } else {
-                        throw new Error(data.error?.message || "Metin modeli yanıt vermedi.");
-                    }
-                }
+                const data = await res.json();
                 loadingMsg.remove();
+
+                if (data.error) throw new Error(data.error.message);
+
+                if (data.candidates && data.candidates[0]) {
+                    renderResponse(data.candidates[0]);
+                } else {
+                    throw new Error("Yanıt alınamadı.");
+                }
+
             } catch (err) {
-                if(chatFlow.lastElementChild) {
-                    chatFlow.lastElementChild.innerHTML = `<span class='text-red-500'>> HATA: ${err.message}</span><br><br><small class='text-zinc-600'>Not: Bu hata genellikle API anahtarının ilgili modele (Veo/Imagen) erişim izni olmamasından kaynaklanır.</small>`;
+                if(document.getElementById('chat-flow').lastElementChild) {
+                    document.getElementById('chat-flow').lastElementChild.innerHTML = `<span class='text-red-500'>Hata: ${err.message}</span>`;
                 }
             }
         }
 
-        function renderResponse(data) {
+        function renderResponse(candidate) {
             const div = document.createElement('div');
             div.className = "bubble ai-msg";
-            let html = `<span class="tag tag-v2">${data.model}</span><br>`;
-            if(data.text) html += data.text.replace(/\n/g, '<br>');
-            if(data.media) {
-                html += `<div class="media-box">${data.type==='video' ? `<video src="${data.media}" controls autoplay loop class="w-full">` : `<img src="${data.media}" class="w-full">`}</div>`;
+            let text = candidate.content.parts[0].text;
+            let html = text.replace(/\n/g, '<br>');
+            
+            const sources = candidate.groundingMetadata?.groundingAttributions;
+            if(sources && sources.length > 0) {
+                html += `<div class="mt-4 pt-2 border-t border-zinc-800 text-[10px] text-zinc-500 italic">Kaynaklar bulundu.</div>`;
             }
-            if(data.sources && data.sources.length > 0) {
-                html += `<div class="mt-4 pt-2 border-t border-zinc-800 text-[10px] text-zinc-500">KAYNAKLAR:<br>`;
-                data.sources.forEach(s => html += `<a href="${s.web?.uri}" target="_blank" class="text-blue-400 underline mr-2">🔗 ${s.web?.title.substring(0,25)}...</a>`);
-                html += `</div>`;
-            }
+            
             div.innerHTML = html;
-            chatFlow.appendChild(div);
-            chatFlow.scrollTop = chatFlow.scrollHeight;
+            document.getElementById('chat-flow').appendChild(div);
+            document.getElementById('chat-flow').scrollTop = document.getElementById('chat-flow').scrollHeight;
         }
 
         function addMessage(role, text) {
             const div = document.createElement('div');
             div.className = `bubble ${role === 'ai' ? 'ai-msg' : 'user-msg'}`;
             div.innerHTML = text.replace(/\n/g, '<br>');
-            chatFlow.appendChild(div);
-            chatFlow.scrollTop = chatFlow.scrollHeight;
+            document.getElementById('chat-flow').appendChild(div);
+            document.getElementById('chat-flow').scrollTop = document.getElementById('chat-flow').scrollHeight;
         }
 
         document.getElementById('sendAction').onclick = performAction;
-        queryInput.onkeypress = (e) => e.key === 'Enter' && performAction();
+        document.getElementById('queryInput').onkeypress = (e) => e.key === 'Enter' && performAction();
     </script>
 </body>
 </html>
+
+
 
 
 
