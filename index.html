@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>HALİT EVİN | Auth Terminal</title>
+    <title>HALİT EVİN | Terminal OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -83,34 +83,36 @@
         }
 
         .media-box { border: 1px solid var(--hacker-green); margin-top: 10px; background: #000; }
+        
+        .loading-shimmer { animation: pulse 1.5s infinite; opacity: 0.5; }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <canvas id="matrix-canvas"></canvas>
 
-    <!-- AUTH OVERLAY -->
     <div id="auth-overlay">
         <div class="terminal-card">
-            <h2 class="text-sm font-bold mb-4 tracking-widest">[ERİŞİM PROTOKOLÜ]</h2>
-            <p class="text-[10px] mb-6 opacity-60">Sistem anahtarı almak için Gmail adresinizi girin.</p>
-            <input type="email" id="gmailInput" placeholder="kullanici@gmail.com" class="mb-4 border-zinc-800 focus:border-green-500">
-            <div id="authStatus" class="text-[10px] mb-4 text-yellow-500 hidden italic">Protokol işleniyor...</div>
-            <button onclick="handleAuth()" class="btn-green w-full">Anahtar Al / Giriş Yap</button>
+            <h2 class="text-sm font-bold mb-4 tracking-widest">[GIRIS PROTOKOLÜ]</h2>
+            <p class="text-[10px] mb-6 opacity-60">Sistem anahtarı oluşturmak için Gmail adresinizi girin.</p>
+            <input type="email" id="gmailInput" placeholder="ornek@gmail.com" class="mb-4 border-zinc-800 focus:border-green-500">
+            <div id="authStatus" class="text-[10px] mb-4 text-yellow-500 hidden italic">Sistem doğrulanıyor...</div>
+            <button id="authBtn" onclick="handleAuth()" class="btn-green w-full">Anahtar Üret</button>
         </div>
     </div>
 
     <div class="app-container">
         <header>
             <div class="header-title">HALİT EVİN</div>
-            <div id="userBadge" class="absolute right-5 text-[10px] opacity-50 hidden">UID: null</div>
+            <div id="userBadge" class="absolute right-5 text-[10px] opacity-50 hidden">KEY: ---</div>
         </header>
 
         <main id="chat-flow" class="chat-area"></main>
 
         <footer class="input-bar">
             <div class="flex gap-2 max-w-4xl mx-auto">
-                <input type="text" id="queryInput" placeholder="Komut girin...">
+                <input type="text" id="queryInput" placeholder="Komut bekleniyor...">
                 <button id="sendAction" class="btn-green px-6">EXE</button>
             </div>
         </footer>
@@ -118,122 +120,137 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
-        // Firebase Config (Environment variables)
+        // Global Değişkenler
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'halit-evin-ai';
 
-        let currentUser = null;
         let userApiKey = null;
+        let authenticatedUser = null;
 
-        // Matrix Effect
+        // Matrix Arka Plan
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        const drops = Array(Math.floor(canvas.width / 20)).fill(1);
+        let width, height, drops;
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            drops = Array(Math.floor(width / 20)).fill(1);
+        }
+        window.onresize = resize; resize();
+
         function drawMatrix() {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, width, height);
             ctx.fillStyle = "#0F0"; ctx.font = "15px monospace";
             drops.forEach((y, i) => {
                 ctx.fillText(String.fromCharCode(Math.random() * 128), i * 20, y * 20);
-                if (y * 20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                if (y * 20 > height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
             });
         }
         setInterval(drawMatrix, 50);
 
-        // Auth Logic
+        // Auth İşlemi
         window.handleAuth = async () => {
             const email = document.getElementById('gmailInput').value.trim();
-            if (!email.includes('@gmail.com')) {
-                alert("Lütfen geçerli bir Gmail adresi girin.");
+            const btn = document.getElementById('authBtn');
+            const status = document.getElementById('authStatus');
+
+            if (!email || !email.includes('@gmail.com')) {
+                alert("Hata: Geçerli bir Gmail adresi gereklidir.");
                 return;
             }
 
-            const status = document.getElementById('authStatus');
+            btn.disabled = true;
+            btn.innerText = "YÜKLENİYOR...";
             status.classList.remove('hidden');
-            
+
             try {
-                // Anonymous sign in for Firestore access
-                if (!auth.currentUser) await signInAnonymously(auth);
-                const uid = auth.currentUser.uid;
+                // 1. Önce Anonim Giriş Yap (Firestore kuralı için)
+                const authResult = await signInAnonymously(auth);
+                const uid = authResult.user.uid;
+
+                // 2. Gmail adresini döküman ID'si yap (Noktaları değiştirerek)
+                const safeId = email.replace(/[^a-zA-Z0-9]/g, '_');
+                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', safeId);
                 
-                // Firestore'da Gmail'e göre anahtar ara veya oluştur
-                const cleanEmail = email.replace(/\./g, '_');
-                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', cleanEmail);
                 const userSnap = await getDoc(userRef);
 
                 if (userSnap.exists()) {
                     userApiKey = userSnap.data().apiKey;
                 } else {
-                    // Yeni anahtar üret
-                    const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
-                    userApiKey = `HE-AI-${randomSuffix}`;
+                    const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    userApiKey = `HE-AI-${randomId}`;
                     await setDoc(userRef, {
                         email: email,
                         apiKey: userApiKey,
-                        createdAt: new Date().toISOString(),
-                        uid: uid
+                        uid: uid,
+                        timestamp: Date.now()
                     });
                 }
 
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('userBadge').innerText = `KEY: ${userApiKey}`;
                 document.getElementById('userBadge').classList.remove('hidden');
-                addMessage('ai', `Erişim doğrulandı. Gmail: ${email}<br>Sistem Anahtarınız: <b>${userApiKey}</b><br>Artık komut gönderebilirsiniz.`);
+                
+                addMessage('ai', `Hoş geldin, <b>${email}</b>. <br>Erişim anahtarın tanımlandı: <span class="text-white">${userApiKey}</span>`);
             } catch (err) {
-                console.error(err);
-                alert("Erişim hatası: " + err.message);
+                console.error("Auth Error:", err);
+                status.innerText = "Sistem Hatası: Veritabanı bağlantısı kurulamadı.";
+                btn.disabled = false;
+                btn.innerText = "Tekrar Dene";
             }
         };
 
         async function performAction() {
-            const queryInput = document.getElementById('queryInput');
-            const text = queryInput.value.trim();
+            const input = document.getElementById('queryInput');
+            const text = input.value.trim();
             if(!text) return;
 
             addMessage('user', text);
-            queryInput.value = '';
+            input.value = '';
 
             try {
-                addMessage('ai', "Sistem işleniyor...", true);
-                const loadingMsg = chatFlow.lastElementChild;
+                addMessage('ai', "<span class='loading-shimmer'>İşlem yürütülüyor...</span>", true);
+                const loading = document.querySelector('.chat-area').lastElementChild;
 
-                // Burada Gemini 2.5 Flash API çağrısı yapılabilir
-                // Şimdilik demo yanıtı
+                // Burada Gemini 2.5 Flash API'nı çağırabilirsiniz.
+                // Demo için 1 saniye bekletiyoruz.
                 setTimeout(() => {
-                    loadingMsg.remove();
+                    loading.remove();
                     if(text.toLowerCase().includes('resim')) {
-                        const url = `https://pollinations.ai/p/${encodeURIComponent(text)}?width=1024&height=1024&nologo=true`;
-                        renderMediaResponse(url);
+                        const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(text)}?width=1024&height=1024&nologo=true`;
+                        renderMedia(imgUrl);
                     } else {
-                        addMessage('ai', "Komut başarıyla işlendi. Hacker terminali üzerinden yanıtlar optimize ediliyor.");
+                        addMessage('ai', "Terminal üzerinden gelen komut başarıyla işlendi. Yanıt optimize ediliyor.");
                     }
-                }, 1000);
+                }, 1200);
             } catch (err) {
                 addMessage('ai', "Hata: " + err.message);
             }
         }
 
         function addMessage(role, text, isTemp = false) {
+            const chatFlow = document.getElementById('chat-flow');
             const div = document.createElement('div');
-            div.className = `bubble ${role === 'ai' ? 'ai-msg' : 'user-msg'} ${role === 'user' ? 'self-end' : ''}`;
-            div.innerHTML = `<div class="text-[10px] opacity-50 mb-1">${role.toUpperCase()}</div>${text}`;
-            document.getElementById('chat-flow').appendChild(div);
-            document.getElementById('chat-flow').scrollTop = document.getElementById('chat-flow').scrollHeight;
+            div.className = `bubble ${role === 'ai' ? 'ai-msg' : 'user-msg self-end'}`;
+            div.innerHTML = `<div class="text-[9px] opacity-40 mb-1">${role.toUpperCase()} // STATUS: OK</div>${text}`;
+            chatFlow.appendChild(div);
+            chatFlow.scrollTop = chatFlow.scrollHeight;
         }
 
-        function renderMediaResponse(url) {
+        function renderMedia(url) {
+            const chatFlow = document.getElementById('chat-flow');
             const div = document.createElement('div');
             div.className = "bubble ai-msg";
-            div.innerHTML = `<div class="text-[10px] opacity-50 mb-1">AI MEDIA</div><div class="media-box"><img src="${url}" class="w-full"></div>`;
-            document.getElementById('chat-flow').appendChild(div);
-            document.getElementById('chat-flow').scrollTop = document.getElementById('chat-flow').scrollHeight;
+            div.innerHTML = `<div class="text-[9px] opacity-40 mb-1">AI MEDIA OUTPUT</div><div class="media-box"><img src="${url}" class="w-full"></div>`;
+            chatFlow.appendChild(div);
+            chatFlow.scrollTop = chatFlow.scrollHeight;
         }
 
         document.getElementById('sendAction').onclick = performAction;
@@ -241,23 +258,6 @@
     </script>
 </body>
 </html>
-
- 
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
 
 
 
