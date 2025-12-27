@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Halit Evin AI | v2 Beta</title>
+    <title>Halit Evin AI | Flash Image</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -91,17 +91,25 @@
             border-radius: 10px; display: flex; align-items: center; justify-content: center;
         }
 
-        .tag {
-            font-size: 10px; font-weight: 700; padding: 2px 6px;
-            border-radius: 4px; margin-bottom: 6px; display: inline-block;
-            font-family: 'Fira Code', monospace;
+        .media-box {
+            margin-top: 12px; border-radius: 12px; overflow: hidden;
+            border: 1px solid #333; background: #000;
         }
-        .tag-v2 { background: #3b82f6; color: white; }
 
         #key-config {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.95); z-index: 1000;
             align-items: center; justify-content: center; padding: 20px;
+        }
+        
+        .loading-dots::after {
+            content: '.';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
         }
     </style>
 </head>
@@ -117,12 +125,10 @@
                     <h1 class="text-white text-sm font-black tracking-widest uppercase">Halit Evin AI</h1>
                 </div>
             </div>
-            <!-- Anahtar simgesi ayarlar için gizli ama erişilebilir -->
             <button onclick="openSettings()" class="text-gray-400 p-2"><i class="fas fa-shield-alt"></i></button>
         </header>
 
         <main id="chat-flow" class="chat-area">
-            <!-- Karşılama Mesajı -->
             <div class="bubble ai-msg">
                 Merhaba ben Halit Evin AI.
             </div>
@@ -130,27 +136,24 @@
 
         <footer class="input-bar">
             <div class="input-group">
-                <input type="text" id="queryInput" placeholder="Mesajınızı buraya bırakın..." autocomplete="off">
+                <input type="text" id="queryInput" placeholder="Bir şeyler yazın veya resim isteyin..." autocomplete="off">
                 <button id="sendAction" class="send-btn"><i class="fas fa-paper-plane"></i></button>
             </div>
         </footer>
     </div>
 
-    <!-- API Ayarları Modalı -->
     <div id="key-config">
         <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 w-full max-w-sm">
             <h2 class="text-white font-bold mb-2 uppercase text-xs">API Ayarları</h2>
-            <p class="text-zinc-500 text-[10px] mb-4 italic">Google AI Studio'dan aldığınız yeni anahtarı buraya girin.</p>
             <input type="password" id="keyField" placeholder="AIza..." class="w-full mb-4 bg-zinc-950 p-3 rounded-lg border border-zinc-800 text-sm text-white">
             <div class="flex gap-2">
-                <button onclick="saveApiKey()" class="bg-blue-600 text-white flex-1 py-3 rounded-xl font-bold text-xs">ANAHTARI KAYDET</button>
+                <button onclick="saveApiKey()" class="bg-blue-600 text-white flex-1 py-3 rounded-xl font-bold text-xs">KAYDET</button>
                 <button onclick="closeSettings()" class="bg-zinc-800 text-zinc-400 flex-1 py-3 rounded-xl text-xs">KAPAT</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Arka Plan Matrix Efekti
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -166,18 +169,18 @@
         }
         setInterval(draw, 50);
 
-        // API Anahtarı Yönetimi
         let apiKey = localStorage.getItem('halit_v2_ultimate_key') || ""; 
+        const chatFlow = document.getElementById('chat-flow');
+        const queryInput = document.getElementById('queryInput');
 
         function openSettings() { document.getElementById('key-config').style.display = 'flex'; }
         function closeSettings() { document.getElementById('key-config').style.display = 'none'; }
-        
         function saveApiKey() {
             const val = document.getElementById('keyField').value.trim();
             if(val) {
                 localStorage.setItem('halit_v2_ultimate_key', val);
                 apiKey = val;
-                addMessage('ai', "> Sistem güncellendi. Artık hazırız.");
+                addMessage('ai', "> Sistem güncellendi. İsteklerinizi bekliyorum.");
                 closeSettings();
             }
         }
@@ -185,75 +188,98 @@
         async function performAction() {
             const text = queryInput.value.trim();
             if(!text) return;
-            if(!apiKey) {
-                addMessage('ai', "> Lütfen önce bir API anahtarı tanımlayın (Sağ üstteki ikon).");
-                openSettings();
-                return;
-            }
+            if(!apiKey) { addMessage('ai', "> Lütfen önce bir API anahtarı girin."); openSettings(); return; }
 
             addMessage('user', text);
             queryInput.value = '';
 
+            const isImageRequest = /resim|çiz|foto|görsel|image/i.test(text);
+
             try {
-                addMessage('ai', "> ...", true);
-                const loadingMsg = document.getElementById('chat-flow').lastElementChild;
+                addMessage('ai', '<span class="loading-dots">Hazırlanıyor</span>', true);
+                const loadingMsg = chatFlow.lastElementChild;
 
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: text }] }],
-                        tools: [{ "google_search": {} }]
-                    })
-                });
-
-                const data = await res.json();
-                loadingMsg.remove();
-
-                if (data.error) throw new Error(data.error.message);
-
-                if (data.candidates && data.candidates[0]) {
-                    renderResponse(data.candidates[0]);
+                if (isImageRequest) {
+                    // Gemini 2.5 Flash Image Preview ile görsel oluşturma
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: text }] }],
+                            generationConfig: { responseModalities: ["IMAGE"] }
+                        })
+                    });
+                    const data = await res.json();
+                    loadingMsg.remove();
+                    
+                    const base64 = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                    if(base64) {
+                        renderMediaResponse(`data:image/png;base64,${base64}`);
+                    } else {
+                        throw new Error("Görsel oluşturulamadı.");
+                    }
                 } else {
-                    throw new Error("Yanıt alınamadı.");
+                    // Standart Metin ve Google Search
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            contents: [{ parts: [{ text: text }] }],
+                            tools: [{ "google_search": {} }]
+                        })
+                    });
+                    const data = await res.json();
+                    loadingMsg.remove();
+                    
+                    if (data.candidates?.[0]) {
+                        renderTextResponse(data.candidates[0]);
+                    } else {
+                        throw new Error("Yanıt alınamadı.");
+                    }
                 }
-
             } catch (err) {
-                if(document.getElementById('chat-flow').lastElementChild) {
-                    document.getElementById('chat-flow').lastElementChild.innerHTML = `<span class='text-red-500'>Hata: ${err.message}</span>`;
+                if(chatFlow.lastElementChild) {
+                    chatFlow.lastElementChild.innerHTML = `<span class='text-red-500'>Hata: ${err.message}</span>`;
                 }
             }
         }
 
-        function renderResponse(candidate) {
+        function renderTextResponse(candidate) {
             const div = document.createElement('div');
             div.className = "bubble ai-msg";
-            let text = candidate.content.parts[0].text;
-            let html = text.replace(/\n/g, '<br>');
-            
+            let html = candidate.content.parts[0].text.replace(/\n/g, '<br>');
             const sources = candidate.groundingMetadata?.groundingAttributions;
             if(sources && sources.length > 0) {
-                html += `<div class="mt-4 pt-2 border-t border-zinc-800 text-[10px] text-zinc-500 italic">Kaynaklar bulundu.</div>`;
+                html += `<div class="mt-4 pt-2 border-t border-zinc-800 text-[10px] text-zinc-500 italic">Kaynaklar incelendi.</div>`;
             }
-            
             div.innerHTML = html;
-            document.getElementById('chat-flow').appendChild(div);
-            document.getElementById('chat-flow').scrollTop = document.getElementById('chat-flow').scrollHeight;
+            chatFlow.appendChild(div);
+            chatFlow.scrollTop = chatFlow.scrollHeight;
+        }
+
+        function renderMediaResponse(url) {
+            const div = document.createElement('div');
+            div.className = "bubble ai-msg";
+            div.innerHTML = `<div class="media-box"><img src="${url}" class="w-full"></div>`;
+            chatFlow.appendChild(div);
+            chatFlow.scrollTop = chatFlow.scrollHeight;
         }
 
         function addMessage(role, text) {
             const div = document.createElement('div');
             div.className = `bubble ${role === 'ai' ? 'ai-msg' : 'user-msg'}`;
-            div.innerHTML = text.replace(/\n/g, '<br>');
-            document.getElementById('chat-flow').appendChild(div);
-            document.getElementById('chat-flow').scrollTop = document.getElementById('chat-flow').scrollHeight;
+            div.innerHTML = text;
+            chatFlow.appendChild(div);
+            chatFlow.scrollTop = chatFlow.scrollHeight;
         }
 
         document.getElementById('sendAction').onclick = performAction;
-        document.getElementById('queryInput').onkeypress = (e) => e.key === 'Enter' && performAction();
+        queryInput.onkeypress = (e) => e.key === 'Enter' && performAction();
     </script>
 </body>
 </html>
+
+ 
 
 
 
