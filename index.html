@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HALIT EVIN AI | Paradox Resolver</title>
+    <title>HALİT EVİN AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap');
         
         :root {
             --neon-green: #00ff41;
-            --neon-yellow: #f4ff00;
-            --bg-black: #050505;
+            --neon-blue: #00d4ff;
+            --neon-gold: #ffcf00;
+            --bg-black: #020202;
+            --terminal-green: rgba(0, 255, 65, 0.1);
         }
 
         body {
@@ -23,185 +27,215 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-        }
-
-        .crt-effect {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-            background-size: 100% 3px, 3px 100%;
-            z-index: 1000; pointer-events: none;
+            background-image: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
         }
 
         header {
             background: #000;
-            border-bottom: 2px solid var(--neon-green);
-            padding: 1rem 2rem;
+            border-bottom: 5px solid var(--neon-green);
+            padding: 3rem 1rem;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
-            z-index: 10;
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.5);
+            z-index: 100;
+        }
+
+        .header-title {
+            font-size: clamp(2.5rem, 10vw, 6rem);
+            font-weight: 900;
+            letter-spacing: 1.8rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 30px var(--neon-green);
+            color: var(--neon-green);
+            text-align: center;
         }
 
         .terminal-content {
             flex: 1;
             overflow-y: auto;
-            padding: 2rem;
+            padding: 2.5rem;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
-            background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
+            gap: 2rem;
         }
 
-        .msg-ai {
-            border: 1px solid rgba(0, 255, 65, 0.2);
-            background: rgba(0, 15, 0, 0.85);
-            padding: 1.5rem;
-            border-left: 6px solid var(--neon-green);
+        .msg {
+            max-width: 96%;
+            padding: 2rem;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            background: var(--terminal-green);
             line-height: 1.8;
-            animation: fadeIn 0.4s ease-out;
+            position: relative;
+            animation: emerge 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            word-wrap: break-word;
         }
 
-        .analysis-card {
-            background: rgba(244, 255, 0, 0.05);
-            border: 1px solid var(--neon-yellow);
-            padding: 1.2rem;
-            margin-top: 1rem;
-            color: #fff;
-        }
+        .msg-ai { border-left: 10px solid var(--neon-green); align-self: flex-start; }
+        .msg-user { border-right: 10px solid #fff; align-self: flex-end; background: #1a1a1a; color: #fff; border-color: #fff; border-left: none; }
 
         .badge {
-            font-size: 0.7rem;
+            font-size: 0.9rem;
             text-transform: uppercase;
-            font-weight: bold;
-            padding: 2px 10px;
-            background: rgba(0, 255, 65, 0.1);
-            border: 1px solid var(--neon-green);
-            margin-bottom: 10px;
+            margin-bottom: 1rem;
+            font-weight: 900;
+            display: block;
+            letter-spacing: 4px;
+        }
+
+        .source-container {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .source-chip {
             display: inline-block;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .source-chip:hover {
+            background: var(--neon-blue);
+            color: #000;
         }
 
         .input-wrapper {
             background: #000;
-            border-top: 2px solid var(--neon-green);
-            padding: 1.2rem 2.5rem;
+            border-top: 3px solid var(--neon-green);
+            padding: 2rem 4rem;
             display: flex;
             gap: 1.5rem;
+            z-index: 100;
         }
 
         input {
             flex: 1;
-            background: #0a0a0a;
-            border: 1px solid var(--neon-green);
+            background: #050505;
+            border: 2px solid var(--neon-green);
             color: var(--neon-green);
-            padding: 1rem;
+            padding: 1.5rem;
             outline: none;
+            font-size: 1.3rem;
+            box-shadow: inset 0 0 15px rgba(0, 255, 65, 0.1);
         }
 
         button {
             background: var(--neon-green);
             color: #000;
-            padding: 0 3rem;
+            padding: 0 4rem;
             font-weight: 900;
+            text-transform: uppercase;
             cursor: pointer;
+            transition: 0.3s all;
+            font-size: 1.1rem;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        button:hover {
+            background: #fff;
+            box-shadow: 0 0 40px var(--neon-green);
+            transform: scale(1.05);
+        }
+
+        @keyframes emerge {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        ::-webkit-scrollbar { width: 12px; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-green); border-radius: 6px; }
     </style>
 </head>
 <body>
-    <div class="crt-effect"></div>
 
     <header>
-        <div class="text-xl font-bold tracking-widest">HALIT EVIN AI</div>
-        <div class="text-[10px] text-yellow-400">PARADOX_ENGINE_v14.2</div>
+        <div class="header-title">HALİT EVİN AI</div>
     </header>
 
     <main id="chat" class="terminal-content">
-        <div class="msg-ai">
-            <span class="badge">LOGIC_ANALYSIS // SORGULAMA BAŞLATILDI</span><br>
-            <strong>Soru:</strong> AVM'ye bıçak sokmak yasaksa neden içeride satılıyor?<br><br>
-            
-            Bu durum, siber-toplumun "Kullanım Amacı" (Context) ve "Kontrollü Ticaret" (Regulated Trade) protokolleri arasındaki dengeden kaynaklanır. Analiz raporu aşağıdadır:
-
-            <div class="analysis-card">
-                <span class="text-yellow-400 font-bold">1. Eylem vs. Emtia:</span><br>
-                AVM'ye dışarıdan bıçakla girmek "potansiyel bir tehdit eylemi" olarak kodlanmıştır. Ancak içeride satılan bıçak bir "ticari emtia"dır. Satın alındığında, mağaza genellikle ürünü mühürlü kutusunda, faturasıyla ve bazen güvenlik eşliğinde teslim eder.
-            </div>
-
-            <div class="analysis-card">
-                <span class="text-yellow-400 font-bold">2. Güvenlik Çemberi:</span><br>
-                X-ray cihazları, içeriye kontrolsüz, kayıtsız ve "açık" kesici alet girmesini engellemek içindir. Mağaza içindeki satış, o bıçağın mülkiyetinin el değiştirmesidir, kullanıma açılması değildir.
-            </div>
-
-            <div class="analysis-card">
-                <span class="text-yellow-400 font-bold">3. Yasal Çerçeve (6136 Sayılı Kanun):</span><br>
-                Bıçağın "taşıma" ve "nakil" durumları farklıdır. AVM'den yeni alınmış kutulu bir bıçak "nakil" statüsündedir. Belinizde açık halde taşıdığınız bir bıçak ise "silah" statüsüne geçer.
-            </div>
-
-            <strong>Siber-Özet:</strong> Yasak olan bıçağın kendisi değil, o bıçağın kontrolsüz bir şekilde ortak alana dahil edilmesidir. Alkol satışı yasal olan ancak alkol tüketimi yasak olan kamusal alanlar gibi, bu da bir "Süreç Kontrolü" meselesidir.
+        <div class="msg msg-ai">
+            <span class="badge">SİSTEM MESAJI</span>
+            Merhaba, ben Halit Evin AI.
         </div>
     </main>
 
     <footer class="input-wrapper">
-        <input type="text" id="userInput" placeholder="Başka bir paradoks veya soru sorun..." autocomplete="off">
-        <button onclick="send()">SORGULA</button>
+        <input type="text" id="userInput" placeholder="Nexus Search aktif. Ne aramak istersiniz?" autocomplete="off">
+        <button onclick="nexusSearch()">ARA</button>
     </footer>
 
     <script>
-        const apiKey = "";
+        const apiKey = ""; 
         const chat = document.getElementById('chat');
         const input = document.getElementById('userInput');
 
-        async function send() {
+        async function nexusSearch() {
             const val = input.value.trim();
-            if(!val) return;
-            
-            // Kullanıcı mesajı ekle
-            const uDiv = document.createElement('div');
-            uDiv.className = 'msg-ai self-end !border-l-0 !border-r-6 !border-white text-white bg-[#111]';
-            uDiv.innerHTML = `<span class="badge !border-white">USER // QUERY</span><br>${val}`;
-            chat.appendChild(uDiv);
+            if (!val) return;
+
+            addMsg(val, 'user');
             input.value = '';
 
-            const id = 'ai-' + Date.now();
-            const aiDiv = document.createElement('div');
-            aiDiv.className = 'msg-ai';
-            aiDiv.id = id;
-            aiDiv.innerHTML = '<span class="animate-pulse">Siber-mantık katmanları analiz ediliyor...</span>';
-            chat.appendChild(aiDiv);
-            chat.scrollTop = chat.scrollHeight;
+            const aiId = 'ai-' + Date.now();
+            addMsg('<span class="animate-pulse">Google Nexus Search Katmanına Erişiliyor... Küresel Veri Analiz Ediliyor...</span>', 'ai', aiId);
 
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: val + " (Bu soruyu siberpunk temasında, çok uzun ve detaylı açıkla. Gerekiyorsa matematik, harita veya link ekle.)" }] }],
+                        contents: [{ parts: [{ text: val + " (Google Search sonuçlarını kullanarak en güncel, en kapsamlı ve teknik bilgiyi ver. Piyasa verisi ise anlık sayıları belirt. Yanıt siberpunk raporu şeklinde olsun.)" }] }],
                         tools: [{ "google_search": {} }],
-                        systemInstruction: { parts: [{ text: "Sen Halit Evin AI asistanısın. En karmaşık paradokslara ve sorulara mantıklı, siberpunk ve detaylı cevaplar verirsin." }] }
+                        systemInstruction: { parts: [{ text: "Sen Halit Evin AI'sın. Google Search grounding teknolojisini en üst seviyede kullanarak gerçek zamanlı internet verilerini işler ve sunarsın." }] }
                     })
                 });
 
-                const data = await response.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!response.ok) throw new Error("Ağ Kesintisi");
 
-                if (text) {
-                    aiDiv.innerHTML = `<span class="badge">HALIT EVIN AI // OMNIPOTENT_OUTPUT</span><br>${text.replace(/\n/g, '<br>')}`;
-                } else {
-                    aiDiv.innerHTML = "Veri akışı kesildi, ancak mantık çekirdekleri stabil.";
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Veri hattında parazit oluştu.";
+                const attributions = data.candidates?.[0]?.groundingMetadata?.groundingAttributions || [];
+
+                let htmlContent = `<span class="badge">HALİT EVİN AI // NEXUS_OUTPUT</span>${text.replace(/\n/g, '<br>')}`;
+
+                if (attributions.length > 0) {
+                    htmlContent += `<div class="source-container"><span class="badge text-blue-400">DOĞRULANMIŞ_KAYNAKLAR</span>`;
+                    attributions.forEach(a => {
+                        htmlContent += `<a href="${a.web?.uri}" target="_blank" class="source-chip">${a.web?.title || 'Kaynak'}</a>`;
+                    });
+                    htmlContent += `</div>`;
                 }
-            } catch (e) {
-                aiDiv.innerHTML = "Bypass modunda yanıt: Veri bağlantısı kurulamadı.";
+
+                document.getElementById(aiId).innerHTML = htmlContent;
+
+            } catch (err) {
+                document.getElementById(aiId).innerHTML = `<span class="badge text-red-500">SİSTEM HATASI // PARAZİT KORUMASI</span>Veri akışında bir kopma yaşandı. Bu durum sunucu yoğunluğundan olabilir. Lütfen sorguyu daha basit hale getirerek tekrar deneyin.`;
             }
             chat.scrollTop = chat.scrollHeight;
         }
 
-        input.addEventListener('keypress', (e) => e.key === 'Enter' && send());
+        function addMsg(text, role, id = null) {
+            const div = document.createElement('div');
+            div.className = `msg msg-${role}`;
+            if (id) div.id = id;
+            div.innerHTML = role === 'user' ? `<span class="badge opacity-50">KULLANICI_GİRİŞİ</span>${text}` : text;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        input.addEventListener('keypress', (e) => e.key === 'Enter' && nexusSearch());
     </script>
 </body>
 </html>
+
+
 
 
             
