@@ -27,7 +27,7 @@
     <header>
         <div class="text-xl font-black tracking-widest uppercase">HALİT EVİN AI</div>
         <div id="authPanel" class="text-[10px] mt-2 tracking-widest">
-            <span id="status">BAĞLANTI KURULUYOR...</span>
+            <span id="status">SİSTEM BAĞLANTISI KURULUYOR...</span>
             <button id="loginBtn" class="ml-2 border border-neon px-2 py-0.5 hover:bg-neon hover:text-black transition-colors">GMAIL LOGIN</button>
             <button id="logoutBtn" class="ml-2 border border-red-500 px-2 py-0.5 text-red-500 hidden">EXIT</button>
         </div>
@@ -60,7 +60,10 @@
             appId: "1:719504232838"
         };
 
-        const geminiKey = "AIzaSyCsXJNhum8f0Q8wDDyN0zcVPkblr5yiIMs";
+        // Yeni Gemini API Anahtarı
+        const geminiApiKey = "AIzaSyA1F4ZMeqdhOel25P178opffVbJ9qrBEmk"; 
+        const modelUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
+
         let db, auth, user = null;
 
         try {
@@ -85,7 +88,7 @@
             };
             
             document.getElementById('logoutBtn').onclick = () => signOut(auth);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Firebase başlatılamadı:", e); }
 
         window.send = async () => {
             const input = document.getElementById('userInput');
@@ -95,26 +98,38 @@
             addMsg(val, 'user');
             input.value = '';
             const aiId = 'ai-' + Date.now();
-            addMsg('...', 'ai', aiId);
+            addMsg('Veri işleniyor...', 'ai', aiId);
 
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiKey}`, {
+                const response = await fetch(`${modelUrl}?key=${geminiApiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: val }] }] })
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: val }] }]
+                    })
                 });
-                const data = await res.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Yanıt yok.";
+
+                if (!response.ok) {
+                    const errorInfo = await response.json();
+                    throw new Error(errorInfo.error?.message || "API Erişilemiyor");
+                }
+
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Yanıt oluşturulamadı.";
                 document.getElementById(aiId).innerHTML = `<span class="badge">HALİT EVİN AI</span>${text.replace(/\n/g, '<br>')}`;
 
                 if (user && db) {
-                    await addDoc(collection(db, 'artifacts', 'halit-evin-ai', 'users', user.uid, 'history'), {
-                        query: val,
-                        timestamp: serverTimestamp()
-                    });
+                    try {
+                        await addDoc(collection(db, 'artifacts', 'halit-evin-ai', 'users', user.uid, 'history'), {
+                            query: val,
+                            timestamp: serverTimestamp()
+                        });
+                    } catch (fErr) {
+                        console.warn("Firestore yazım hatası:", fErr);
+                    }
                 }
             } catch (err) {
-                document.getElementById(aiId).innerText = "Hata: Veri akışı koptu.";
+                document.getElementById(aiId).innerText = "Hata: " + err.message;
             }
             const chat = document.getElementById('chat');
             chat.scrollTop = chat.scrollHeight;
@@ -134,6 +149,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
