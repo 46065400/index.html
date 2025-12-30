@@ -3,48 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>HALİT EVİN AI</title>
+    <title>HALİT EVİN AI - PLUS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap');
-        :root { --neon: #00ff41; --bg: #020202; }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--neon); font-family: 'Fira Code', monospace; }
+        
+        :root { 
+            --neon: #00ff41; 
+            --plus: #ffae00;
+            --plus-glow: rgba(255, 174, 0, 0.4);
+            --bg: #000000; 
+        }
+
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: var(--bg); 
+            color: var(--neon); font-family: 'Fira Code', monospace; 
+        }
+
         body { display: flex; flex-direction: column; }
-        header { flex-shrink: 0; background: #000; border-bottom: 2px solid var(--neon); padding: 1rem; text-align: center; z-index: 50; }
-        #chat { flex-grow: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; -webkit-overflow-scrolling: touch; }
-        .msg { max-width: 85%; padding: 1rem; border: 1px solid rgba(0, 255, 65, 0.2); background: rgba(10, 10, 10, 0.8); word-wrap: break-word; font-size: 0.9rem; }
-        .msg-ai { border-left: 4px solid var(--neon); align-self: flex-start; }
-        .msg-user { border-right: 4px solid #fff; align-self: flex-end; color: #fff; }
-        .input-container { flex-shrink: 0; background: #000; border-top: 2px solid var(--neon); padding: 1rem; display: flex; gap: 0.5rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
-        input { flex: 1; background: #0a0a0a; border: 1px solid var(--neon); color: var(--neon); padding: 0.75rem; outline: none; min-width: 0; }
-        .btn { background: var(--neon); color: #000; padding: 0.75rem 1.2rem; font-weight: bold; border: none; cursor: pointer; text-transform: uppercase; }
-        .badge { font-size: 0.6rem; display: block; margin-bottom: 0.3rem; opacity: 0.7; font-weight: bold; }
-        .source-tag { display: inline-block; background: rgba(0, 255, 65, 0.1); border: 1px solid var(--neon); color: var(--neon); padding: 2px 6px; font-size: 0.6rem; margin-top: 5px; text-decoration: none; border-radius: 3px; }
-        .hidden { display: none !important; }
+
+        /* Arka plan tamamen saf siyah */
+        #app-root { background: #000; height: 100%; display: flex; flex-direction: column; }
+
+        header { 
+            flex-shrink: 0; background: #000; 
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2); 
+            padding: 1rem; text-align: center; z-index: 50; 
+        }
+
+        .package-container {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pkg-btn {
+            font-size: 0.65rem;
+            padding: 6px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 6px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .pkg-btn.free.active { background: var(--neon); color: #000; box-shadow: 0 0 10px var(--neon); }
+        .pkg-btn.plus { color: #888; }
+        .pkg-btn.plus.active { background: var(--plus); color: #000; box-shadow: 0 0 15px var(--plus); }
+
+        #chat { 
+            flex-grow: 1; overflow-y: auto; padding: 1.5rem; 
+            display: flex; flex-direction: column; gap: 1.5rem; 
+            background: #000;
+        }
+
+        .msg { 
+            max-width: 88%; padding: 1.2rem; 
+            background: rgba(10, 10, 10, 0.9); 
+            font-size: 0.92rem; line-height: 1.6;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .msg-ai { border-left: 3px solid var(--neon); align-self: flex-start; }
+        
+        /* Plus Mesaj Ayrıcalığı */
+        .msg-ai.plus-active { 
+            border-left: 3px solid var(--plus); 
+            box-shadow: 0 0 20px rgba(255, 174, 0, 0.05);
+            background: rgba(15, 12, 5, 0.9);
+        }
+
+        .msg-user { border-right: 3px solid #333; align-self: flex-end; color: #eee; }
+
+        .input-area { 
+            flex-shrink: 0; background: #000; 
+            border-top: 1px solid rgba(255, 255, 255, 0.1); 
+            padding: 1.2rem; display: flex; gap: 0.8rem; 
+            padding-bottom: calc(1.2rem + env(safe-area-inset-bottom)); 
+        }
+
+        input { 
+            flex: 1; background: #0a0a0a; border: 1px solid #1a1a1a; 
+            color: #fff; padding: 0.9rem 1.2rem; outline: none; 
+            border-radius: 4px; transition: all 0.3s;
+        }
+        
+        input:focus { border-color: var(--neon); box-shadow: 0 0 5px rgba(0, 255, 65, 0.2); }
+        input.plus-mode:focus { border-color: var(--plus); box-shadow: 0 0 5px rgba(255, 174, 0, 0.2); }
+
+        .send-btn { 
+            background: var(--neon); color: #000; 
+            padding: 0 1.5rem; font-weight: bold; 
+            border: none; cursor: pointer; border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .send-btn.plus { background: var(--plus); }
+
+        .badge { font-size: 0.6rem; font-weight: 900; margin-bottom: 8px; display: block; letter-spacing: 1px; }
+        .plus-badge { color: var(--plus); display: flex; align-items: center; gap: 4px; }
+        
+        .source-box {
+            margin-top: 12px; padding-top: 10px;
+            border-top: 1px solid rgba(255, 174, 0, 0.1);
+            display: flex; flex-wrap: wrap; gap: 6px;
+        }
+
+        .source-link {
+            font-size: 0.65rem; color: var(--plus);
+            border: 1px solid rgba(255, 174, 0, 0.3);
+            padding: 2px 8px; border-radius: 20px;
+            text-decoration: none; transition: 0.2s;
+        }
+        .source-link:hover { background: var(--plus); color: #000; }
+
+        .typing { font-style: italic; opacity: 0.5; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="text-xl font-black tracking-widest uppercase">HALİT EVİN AI</div>
-        <div id="authPanel" class="text-[10px] mt-2 tracking-widest">
-            <span id="status">SİSTEM BAĞLANTISI KURULUYOR...</span>
-            <button id="loginBtn" class="ml-2 border border-neon px-2 py-0.5 hover:bg-neon hover:text-black transition-colors">GMAIL LOGIN</button>
-            <button id="logoutBtn" class="ml-2 border border-red-500 px-2 py-0.5 text-red-500 hidden">EXIT</button>
-        </div>
-    </header>
+    <div id="app-root">
+        <header>
+            <div class="text-xl font-black tracking-[0.4em] uppercase text-white">HALİT EVİN AI</div>
+            
+            <div class="package-container">
+                <button id="btnFree" onclick="setPackage('free')" class="pkg-btn free active">FREE</button>
+                <button id="btnPlus" onclick="setPackage('plus')" class="pkg-btn plus">PLUS ⭐</button>
+            </div>
 
-    <main id="chat">
-        <div class="msg msg-ai">
-            <span class="badge">SİSTEM</span>
-            HALİT EVİN AI
-        </div>
-    </main>
+            <div id="authPanel" class="text-[9px] mt-4 opacity-40 tracking-widest">
+                <span id="status">SİSTEM BAĞLANTISI BEKLENİYOR...</span>
+                <button id="loginBtn" class="ml-2 underline hover:text-white">GİRİŞ YAP</button>
+                <button id="logoutBtn" class="ml-2 underline hidden">ÇIKIŞ</button>
+            </div>
+        </header>
 
-    <footer class="input-container">
-        <input type="text" id="userInput" placeholder="Mesajınızı yazın..." autocomplete="off">
-        <button id="sendBtn" onclick="send()" class="btn">GÖNDER</button>
-    </footer>
+        <main id="chat">
+            <div class="msg msg-ai">
+                <span class="badge">SİSTEM</span>
+                HALİT EVİN AI <br>
+                <span class="text-[10px] opacity-60">Sistem hazır. Plus paketi ile canlı piyasa verilerine ve internet aramasına erişebilirsiniz.</span>
+            </div>
+        </main>
+
+        <footer class="input-area">
+            <input type="text" id="userInput" placeholder="Halit Evin AI'a bir soru sorun..." autocomplete="off">
+            <button id="sendBtn" onclick="send()" class="send-btn">GÖNDER</button>
+        </footer>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -60,11 +170,35 @@
             appId: "1:719504232838"
         };
 
-        const geminiApiKey = "AIzaSyA1F4ZMeqdhOel25P178opffVbJ9qrBEmk"; 
+        const geminiApiKey = "AIzaSyA1F4ZMeqdhOel25P178opffVbJ9qrBEmk";
         const modelUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
 
         let db, auth, user = null;
+        let currentPackage = 'free';
 
+        // Paket Yönetimi
+        window.setPackage = (pkg) => {
+            currentPackage = pkg;
+            document.getElementById('btnFree').classList.toggle('active', pkg === 'free');
+            document.getElementById('btnPlus').classList.toggle('active', pkg === 'plus');
+            
+            const input = document.getElementById('userInput');
+            const btn = document.getElementById('sendBtn');
+            
+            if(pkg === 'plus') {
+                input.classList.add('plus-mode');
+                input.placeholder = "Plus ile canlı internet araması yapın...";
+                btn.classList.add('plus');
+                btn.innerHTML = "PLUS GÖNDER";
+            } else {
+                input.classList.remove('plus-mode');
+                input.placeholder = "Halit Evin AI'a bir soru sorun...";
+                btn.classList.remove('plus');
+                btn.innerHTML = "GÖNDER";
+            }
+        };
+
+        // Firebase Başlatma
         try {
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
@@ -72,94 +206,95 @@
 
             onAuthStateChanged(auth, (u) => {
                 user = u;
-                document.getElementById('status').innerText = u ? `ERİŞİM: ${u.displayName.toUpperCase()}` : "ERİŞİM: ANONİM";
+                document.getElementById('status').innerText = u ? `OTURUM: ${u.displayName.toUpperCase()}` : "DURUM: MİSAFİR";
                 document.getElementById('loginBtn').classList.toggle('hidden', !!u);
                 document.getElementById('logoutBtn').classList.toggle('hidden', !u);
             });
 
-            document.getElementById('loginBtn').onclick = async () => {
-                try {
-                    await signInWithPopup(auth, new GoogleAuthProvider());
-                } catch (e) {
-                    addMsg("Bağlantı Hatası: " + e.code, "ai");
-                }
-            };
-            
+            document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
             document.getElementById('logoutBtn').onclick = () => signOut(auth);
-        } catch (e) { console.error("Firebase başlatılamadı:", e); }
+        } catch (e) { console.error(e); }
 
+        // Mesaj Gönderme
         window.send = async () => {
             const input = document.getElementById('userInput');
-            const val = input.value.trim();
-            if (!val) return;
+            const text = input.value.trim();
+            if (!text) return;
 
-            addMsg(val, 'user');
+            addMsg(text, 'user');
             input.value = '';
+            
             const aiId = 'ai-' + Date.now();
-            addMsg('Ağ taranıyor...', 'ai', aiId);
+            const isPlus = currentPackage === 'plus';
+            addMsg(isPlus ? '⚡ Plus Motoru: Canlı ağ taranıyor...' : 'Yanıt hazırlanıyor...', 'ai', aiId, isPlus);
 
             try {
-                // Google Search Grounding ile API çağrısı
+                const payload = {
+                    contents: [{ parts: [{ text: text }] }]
+                };
+
+                // PLUS AYRICALIĞI: İnternet Araması
+                if (isPlus) {
+                    payload.tools = [{ "google_search": {} }];
+                }
+
                 const response = await fetch(modelUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: val }] }],
-                        tools: [{ "google_search": {} }] // Canlı arama özelliği
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error.message || "Bilinmeyen API Hatası");
-                }
+                if (data.error) throw new Error(data.error.message);
 
                 const candidate = data.candidates?.[0];
-                const text = candidate?.content?.parts?.[0]?.text || "Yanıt oluşturulamadı.";
-                const groundings = candidate?.groundingMetadata?.groundingAttributions || [];
+                const resText = candidate?.content?.parts?.[0]?.text || "İşlem sırasında bir hata oluştu.";
+                const sources = candidate?.groundingMetadata?.groundingAttributions || [];
 
-                let htmlResponse = `<span class="badge">HALİT EVİN AI</span>${text.replace(/\n/g, '<br>')}`;
-                
-                // Kaynakları göster
-                if (groundings.length > 0) {
-                    htmlResponse += `<div class="mt-2 border-t border-gray-800 pt-2">`;
-                    groundings.forEach(g => {
-                        htmlResponse += `<a href="${g.web?.uri}" target="_blank" class="source-tag">${g.web?.title}</a>`;
+                // Plus Yanıt Tasarımı
+                let finalHtml = `
+                    <span class="badge ${isPlus ? 'plus-badge' : ''}">
+                        ${isPlus ? '⭐ PLUS ENGINE' : 'HALİT EVİN AI'}
+                    </span>
+                    <div class="ai-text">${resText.replace(/\n/g, '<br>')}</div>
+                `;
+
+                // PLUS AYRICALIĞI: Kaynak Listeleme
+                if (isPlus && sources.length > 0) {
+                    finalHtml += `<div class="source-box">`;
+                    sources.slice(0, 3).forEach(s => {
+                        finalHtml += `<a href="${s.web?.uri}" target="_blank" class="source-link">🔗 ${s.web?.title}</a>`;
                     });
-                    htmlResponse += `</div>`;
+                    finalHtml += `</div>`;
                 }
 
-                document.getElementById(aiId).innerHTML = htmlResponse;
+                document.getElementById(aiId).innerHTML = finalHtml;
 
+                // Veritabanı Kaydı
                 if (user && db) {
-                    try {
-                        await addDoc(collection(db, 'artifacts', 'halit-evin-ai', 'users', user.uid, 'history'), {
-                            query: val,
-                            timestamp: serverTimestamp()
-                        });
-                    } catch (fErr) { console.warn(fErr); }
+                    addDoc(collection(db, 'artifacts', 'halit-evin-ai', 'users', user.uid, 'history'), {
+                        text, response: resText, package: currentPackage, time: serverTimestamp()
+                    }).catch(e => console.warn(e));
                 }
+
             } catch (err) {
-                document.getElementById(aiId).innerText = "Hata: " + err.message;
+                document.getElementById(aiId).innerText = "ERİŞİM HATASI: " + err.message;
             }
             const chat = document.getElementById('chat');
             chat.scrollTop = chat.scrollHeight;
         };
 
-        function addMsg(text, role, id = null) {
+        function addMsg(content, role, id = null, isPlus = false) {
             const chat = document.getElementById('chat');
             const div = document.createElement('div');
-            div.className = `msg msg-${role}`;
+            div.className = `msg msg-${role} ${isPlus ? 'plus-active' : ''}`;
             if (id) div.id = id;
-            div.innerHTML = role === 'user' ? `<span class="badge">SİZ</span>${text}` : text;
+            div.innerHTML = role === 'user' ? `<span class="badge">SİZ</span>${content}` : content;
             chat.appendChild(div);
             chat.scrollTop = chat.scrollHeight;
         }
 
-        document.getElementById('userInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') send();
-        });
+        document.getElementById('userInput').onkeypress = (e) => e.key === 'Enter' && send();
     </script>
 </body>
 </html>
