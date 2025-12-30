@@ -3,48 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>HALİT EVİN AI</title>
+    <title>HALİT EVİN AI | NEXUS FREE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap');
-        :root { --neon: #00ff41; --bg: #020202; }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--neon); font-family: 'Fira Code', monospace; }
-        body { display: flex; flex-direction: column; }
-        header { flex-shrink: 0; background: #000; border-bottom: 2px solid var(--neon); padding: 1rem; text-align: center; z-index: 50; }
-        #chat { flex-grow: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; -webkit-overflow-scrolling: touch; }
-        .msg { max-width: 85%; padding: 1rem; border: 1px solid rgba(0, 255, 65, 0.2); background: rgba(10, 10, 10, 0.8); word-wrap: break-word; font-size: 0.9rem; }
-        .msg-ai { border-left: 4px solid var(--neon); align-self: flex-start; }
-        .msg-user { border-right: 4px solid #fff; align-self: flex-end; color: #fff; }
-        .input-container { flex-shrink: 0; background: #000; border-top: 2px solid var(--neon); padding: 1rem; display: flex; gap: 0.5rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
-        input { flex: 1; background: #0a0a0a; border: 1px solid var(--neon); color: var(--neon); padding: 0.75rem; outline: none; min-width: 0; }
-        .btn { background: var(--neon); color: #000; padding: 0.75rem 1.2rem; font-weight: bold; border: none; cursor: pointer; text-transform: uppercase; }
-        .badge { font-size: 0.6rem; display: block; margin-bottom: 0.3rem; opacity: 0.7; font-weight: bold; }
-        .source-tag { display: inline-block; background: rgba(0, 255, 65, 0.1); border: 1px solid var(--neon); color: var(--neon); padding: 2px 6px; font-size: 0.6rem; margin-top: 5px; text-decoration: none; border-radius: 3px; }
+        
+        :root { 
+            --neon: #00ff41; 
+            --bg: #000000; 
+        }
+
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: var(--bg); 
+            color: var(--neon); font-family: 'Fira Code', monospace; 
+        }
+
+        #app-container { display: flex; flex-direction: column; height: 100vh; }
+
+        header { 
+            flex-shrink: 0; background: #000; 
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2); 
+            padding: 1.2rem; text-align: center; 
+        }
+
+        #chat-window { 
+            flex-grow: 1; overflow-y: auto; padding: 1.5rem; 
+            display: flex; flex-direction: column; gap: 1.5rem; 
+            background: #000;
+            scrollbar-width: thin;
+            scrollbar-color: #222 #000;
+        }
+
+        #chat-window::-webkit-scrollbar { width: 4px; }
+        #chat-window::-webkit-scrollbar-track { background: #000; }
+        #chat-window::-webkit-scrollbar-thumb { background: #222; }
+
+        .message { 
+            max-width: 88%; padding: 1.2rem; 
+            background: #080808; 
+            border: 1px solid rgba(0, 255, 65, 0.1);
+            font-size: 0.95rem; line-height: 1.6;
+            position: relative;
+            border-radius: 4px;
+        }
+
+        .message-ai { border-left: 4px solid var(--neon); align-self: flex-start; }
+        .message-user { border-right: 4px solid #444; align-self: flex-end; color: #eee; border-color: #333; }
+
+        .input-box { 
+            flex-shrink: 0; background: #000; 
+            border-top: 1px solid rgba(255, 255, 255, 0.05); 
+            padding: 1rem; display: flex; gap: 0.8rem; 
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom)); 
+        }
+
+        #userInput { 
+            flex: 1; background: #0a0a0a; border: 1px solid #1a1a1a; 
+            color: #fff; padding: 1rem; outline: none; 
+            border-radius: 4px; transition: border-color 0.3s;
+        }
+
+        #userInput:focus { border-color: var(--neon); }
+
+        .action-btn { 
+            background: var(--neon); color: #000; 
+            padding: 0 1.5rem; font-weight: 900; 
+            border: none; cursor: pointer; border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .label { font-size: 0.65rem; font-weight: 700; margin-bottom: 6px; display: block; opacity: 0.7; letter-spacing: 2px; }
+        
+        .status-bar { font-size: 10px; opacity: 0.5; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="text-xl font-black tracking-widest uppercase">HALİT EVİN AI</div>
-        <div id="authPanel" class="text-[10px] mt-2 tracking-widest">
-            <span id="status">SİSTEM BAĞLANTISI KURULUYOR...</span>
-            <button id="loginBtn" class="ml-2 border border-neon px-2 py-0.5 hover:bg-neon hover:text-black transition-colors">GMAIL LOGIN</button>
-            <button id="logoutBtn" class="ml-2 border border-red-500 px-2 py-0.5 text-red-500 hidden">EXIT</button>
-        </div>
-    </header>
+    <div id="app-container">
+        <header>
+            <div class="text-2xl font-black tracking-[0.3em] text-white uppercase">HALİT EVİN AI</div>
+            <div class="status-bar">
+                <span id="authStatus">SİSTEM ÇEVRİMİÇİ</span>
+                <span class="mx-2">|</span>
+                <button id="loginLink" class="underline">GİRİŞ</button>
+                <button id="logoutLink" class="ml-2 underline hidden">ÇIKIŞ</button>
+            </div>
+        </header>
 
-    <main id="chat">
-        <div class="msg msg-ai">
-            <span class="badge">SİSTEM</span>
-            HALİT EVİN AI
-        </div>
-    </main>
+        <main id="chat-window">
+            <div class="message message-ai">
+                <span class="label">NEXUS SİSTEMİ</span>
+                Merhaba Halit Evin AI sistemine hoş geldiniz. Size nasıl yardımcı olabilirim?
+            </div>
+        </main>
 
-    <footer class="input-container">
-        <input type="text" id="userInput" placeholder="Mesajınızı yazın..." autocomplete="off">
-        <button id="sendBtn" onclick="send()" class="btn">GÖNDER</button>
-    </footer>
+        <footer class="input-box">
+            <input type="text" id="userInput" placeholder="Bir mesaj yazın..." autocomplete="off">
+            <button id="sendBtn" onclick="processMessage()" class="action-btn">GÖNDER</button>
+        </footer>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -60,11 +121,12 @@
             appId: "1:719504232838"
         };
 
-        const geminiApiKey = "AIzaSyA1F4ZMeqdhOel25P178opffVbJ9qrBEmk"; 
-        const modelUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
+        const geminiApiKey = "AIzaSyA1F4ZMeqdhOel25P178opffVbJ9qrBEmk";
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
 
-        let db, auth, user = null;
+        let auth, db, user = null;
 
+        // Firebase Setup
         try {
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
@@ -72,99 +134,79 @@
 
             onAuthStateChanged(auth, (u) => {
                 user = u;
-                document.getElementById('status').innerText = u ? `ERİŞİM: ${u.displayName.toUpperCase()}` : "ERİŞİM: ANONİM";
-                document.getElementById('loginBtn').classList.toggle('hidden', !!u);
-                document.getElementById('logoutBtn').classList.toggle('hidden', !u);
+                document.getElementById('authStatus').innerText = u ? `KİMLİK: ${u.displayName.toUpperCase()}` : "ERİŞİM: ANONİM";
+                document.getElementById('loginLink').classList.toggle('hidden', !!u);
+                document.getElementById('logoutLink').classList.toggle('hidden', !u);
             });
 
-            document.getElementById('loginBtn').onclick = async () => {
-                try {
-                    await signInWithPopup(auth, new GoogleAuthProvider());
-                } catch (e) {
-                    addMsg("Bağlantı Hatası: " + e.code, "ai");
-                }
-            };
-            
-            document.getElementById('logoutBtn').onclick = () => signOut(auth);
-        } catch (e) { console.error("Firebase başlatılamadı:", e); }
+            document.getElementById('loginLink').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+            document.getElementById('logoutLink').onclick = () => signOut(auth);
+        } catch (e) { console.error("Firebase Hatası:", e); }
 
-        window.send = async () => {
+        window.processMessage = async () => {
             const input = document.getElementById('userInput');
-            const val = input.value.trim();
-            if (!val) return;
+            const text = input.value.trim();
+            if (!text) return;
 
-            addMsg(val, 'user');
+            addMsgUI(text, 'user');
             input.value = '';
+            
             const aiId = 'ai-' + Date.now();
-            addMsg('Ağ taranıyor...', 'ai', aiId);
+            addMsgUI('Düşünüyor...', 'ai', aiId);
 
             try {
-                // Google Search Grounding ile API çağrısı
-                const response = await fetch(modelUrl, {
+                // Free sürümde grounding/search özelliği standart olarak eklendi
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: val }] }],
-                        tools: [{ "google_search": {} }] // Canlı arama özelliği
+                        contents: [{ parts: [{ text: text }] }],
+                        tools: [{ "google_search": {} }] 
                     })
                 });
 
                 const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error.message || "Bilinmeyen API Hatası");
-                }
+                if (data.error) throw new Error(data.error.message);
 
-                const candidate = data.candidates?.[0];
-                const text = candidate?.content?.parts?.[0]?.text || "Yanıt oluşturulamadı.";
-                const groundings = candidate?.groundingMetadata?.groundingAttributions || [];
+                const cand = data.candidates?.[0];
+                const resText = cand?.content?.parts?.[0]?.text || "Yanıt alınamadı.";
 
-                let htmlResponse = `<span class="badge">HALİT EVİN AI</span>${text.replace(/\n/g, '<br>')}`;
-                
-                // Kaynakları göster
-                if (groundings.length > 0) {
-                    htmlResponse += `<div class="mt-2 border-t border-gray-800 pt-2">`;
-                    groundings.forEach(g => {
-                        htmlResponse += `<a href="${g.web?.uri}" target="_blank" class="source-tag">${g.web?.title}</a>`;
-                    });
-                    htmlResponse += `</div>`;
-                }
+                let outputHtml = `
+                    <span class="label">HALİT EVİN AI</span>
+                    <div>${resText.replace(/\n/g, '<br>')}</div>
+                `;
 
-                document.getElementById(aiId).innerHTML = htmlResponse;
+                document.getElementById(aiId).innerHTML = outputHtml;
 
                 if (user && db) {
-                    try {
-                        await addDoc(collection(db, 'artifacts', 'halit-evin-ai', 'users', user.uid, 'history'), {
-                            query: val,
-                            timestamp: serverTimestamp()
-                        });
-                    } catch (fErr) { console.warn(fErr); }
+                    addDoc(collection(db, 'artifacts', 'halit-evin-ai', 'users', user.uid, 'history'), {
+                        q: text, r: resText, t: serverTimestamp()
+                    }).catch(e => console.warn(e));
                 }
+
             } catch (err) {
-                document.getElementById(aiId).innerText = "Hata: " + err.message;
+                document.getElementById(aiId).innerText = "HATA: " + err.message;
             }
-            const chat = document.getElementById('chat');
-            chat.scrollTop = chat.scrollHeight;
+            const win = document.getElementById('chat-window');
+            win.scrollTop = win.scrollHeight;
         };
 
-        function addMsg(text, role, id = null) {
-            const chat = document.getElementById('chat');
+        function addMsgUI(content, role, id = null) {
+            const win = document.getElementById('chat-window');
             const div = document.createElement('div');
-            div.className = `msg msg-${role}`;
+            div.className = `message message-${role}`;
             if (id) div.id = id;
-            div.innerHTML = role === 'user' ? `<span class="badge">SİZ</span>${text}` : text;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
+            div.innerHTML = role === 'user' ? `<span class="label">SİZ</span>${content}` : content;
+            win.appendChild(div);
+            win.scrollTop = win.scrollHeight;
         }
 
-        document.getElementById('userInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') send();
-        });
+        document.getElementById('userInput').onkeypress = (e) => e.key === 'Enter' && processMessage();
     </script>
 </body>
 </html>
 
-Bu kodun renklerini sadece siyah yap
+
 
 
 
