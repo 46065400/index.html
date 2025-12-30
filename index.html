@@ -78,6 +78,10 @@
         
         .status-bar { font-size: 10px; opacity: 0.5; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
 
+        .source-tag {
+            display: inline-block; background: rgba(0, 255, 65, 0.1); border: 1px solid var(--neon); color: var(--neon); padding: 2px 6px; font-size: 0.6rem; margin-top: 5px; text-decoration: none; border-radius: 3px; margin-right: 5px;
+        }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -97,7 +101,7 @@
         <main id="chat-window">
             <div class="message message-ai">
                 <span class="label">NEXUS SİSTEMİ</span>
-                Merhaba Halit Evin AI sistemine hoş geldiniz. Size nasıl yardımcı olabilirim?
+                Halit Evin AI Nexus v2.5 aktif. Yeni API anahtarı ile bağlantı kuruldu. Size nasıl yardımcı olabilirim?
             </div>
         </main>
 
@@ -121,12 +125,13 @@
             appId: "1:719504232838"
         };
 
-        const geminiApiKey = "AIzaSyA1F4ZMeqdhOel25P178opffVbJ9qrBEmk";
+        // Güncellenen API Anahtarı
+        const geminiApiKey = "AIzaSyAZs2Tx0I0cZycadJGHcvSBa2RYXKcU3YU";
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
 
         let auth, db, user = null;
 
-        // Firebase Setup
+        // Firebase Başlatma
         try {
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
@@ -141,7 +146,7 @@
 
             document.getElementById('loginLink').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
             document.getElementById('logoutLink').onclick = () => signOut(auth);
-        } catch (e) { console.error("Firebase Hatası:", e); }
+        } catch (e) { console.error("Firebase başlatılamadı:", e); }
 
         window.processMessage = async () => {
             const input = document.getElementById('userInput');
@@ -152,16 +157,15 @@
             input.value = '';
             
             const aiId = 'ai-' + Date.now();
-            addMsgUI('Düşünüyor...', 'ai', aiId);
+            addMsgUI('Nexus veritabanı taranıyor...', 'ai', aiId);
 
             try {
-                // Free sürümde grounding/search özelliği standart olarak eklendi
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: text }] }],
-                        tools: [{ "google_search": {} }] 
+                        tools: [{ "google_search": {} }] // Canlı internet araması aktif
                     })
                 });
 
@@ -169,19 +173,32 @@
                 if (data.error) throw new Error(data.error.message);
 
                 const cand = data.candidates?.[0];
-                const resText = cand?.content?.parts?.[0]?.text || "Yanıt alınamadı.";
+                const resText = cand?.content?.parts?.[0]?.text || "Yanıt oluşturulamadı.";
+                const sources = cand?.groundingMetadata?.groundingAttributions || [];
 
                 let outputHtml = `
                     <span class="label">HALİT EVİN AI</span>
                     <div>${resText.replace(/\n/g, '<br>')}</div>
                 `;
 
+                // Kaynakları göster
+                if (sources.length > 0) {
+                    outputHtml += `<div class="mt-2 pt-2 border-t border-gray-900">`;
+                    sources.slice(0, 3).forEach(s => {
+                        outputHtml += `<a href="${s.web?.uri}" target="_blank" class="source-tag">🔗 ${s.web?.title}</a>`;
+                    });
+                    outputHtml += `</div>`;
+                }
+
                 document.getElementById(aiId).innerHTML = outputHtml;
 
+                // Veritabanına kaydet
                 if (user && db) {
                     addDoc(collection(db, 'artifacts', 'halit-evin-ai', 'users', user.uid, 'history'), {
-                        q: text, r: resText, t: serverTimestamp()
-                    }).catch(e => console.warn(e));
+                        query: text,
+                        response: resText,
+                        timestamp: serverTimestamp()
+                    }).catch(e => console.warn("Firestore kaydı başarısız:", e));
                 }
 
             } catch (err) {
@@ -205,6 +222,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
